@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.GridPane?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="no.hal.timers.fxui.AppController">
+	<top>
+		<HBox>
+			<Label text="Time: "/>
+			<Label fx:id="timeLabel" text="__:__:__"/>
+		</HBox>
+	</top>
+	<center>
+		<GridPane fx:id="competitionGrid">
+			<CheckBox fx:id="selectAllButton" onAction="#handleSelectAll"/>
+			<Label fx:id="participantLabel" text="Participant"/>
+			<Button fx:id="startButton" text="Start"/>
+			<TextField fx:id="timingKeyTextField" text="#"/>
+			<ToggleButton fx:id="editTimingKeysButton" onAction="#handleEditTimingKeys" text="/"/>
+			<Button fx:id="addTimingKeyButton" onAction="#handleAddTimingKey" text="+"/>
+		</GridPane>
+	</center>
+</BorderPane>
