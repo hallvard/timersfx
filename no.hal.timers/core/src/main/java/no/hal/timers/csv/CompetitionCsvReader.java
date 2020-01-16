@@ -48,7 +48,6 @@ public class CompetitionCsvReader {
 					}
 				}
 			}
-			System.out.println(header + ": " + allEmpty);
 			if (emptyColumnsAreTime && allEmpty) {
 				timingKeys.add(header);
 			}

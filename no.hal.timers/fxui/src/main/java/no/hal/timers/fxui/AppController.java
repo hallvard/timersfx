@@ -135,7 +135,6 @@ public class AppController {
 	private boolean toggleSelected(final Participation participation) {
 		final boolean selected = isSelected(participation);
 		setSelected(participation, ! selected);
-		System.out.println("Toggling selected for " + participation.getParticipant().getName());
 		return ! selected;
 	}
 
