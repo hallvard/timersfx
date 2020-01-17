@@ -8,6 +8,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.GridPane?>
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="no.hal.timers.fxui.AppController">
 	<top>
@@ -20,7 +21,11 @@
 		<GridPane fx:id="competitionGrid">
 			<CheckBox fx:id="selectAllButton" onAction="#handleSelectAll"/>
 			<Label fx:id="participantLabel" text="Participant"/>
-			<Button fx:id="startButton" text="Start"/>
+			<Button fx:id="startButton">
+                <graphic>
+                    <FontAwesomeIconView glyphName="FILE" size="36px" glyphStyle="-fx-fill: white" />
+                </graphic>
+            </Button>
 			<TextField fx:id="timingKeyTextField" text="#"/>
 			<ToggleButton fx:id="editTimingKeysButton" onAction="#handleEditTimingKeys" text="/"/>
 			<Button fx:id="addTimingKeyButton" onAction="#handleAddTimingKey" text="+"/>

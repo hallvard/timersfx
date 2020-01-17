@@ -88,7 +88,7 @@ public class AppController {
 	}
 
 	private String formatTime(final Duration time) {
-		return (time != null ? formatTime(time.toHoursPart(), time.toMinutesPart(), time.toSecondsPart(), false) : "__:__");
+		return (time != null ? formatTime(time.toHoursPart(), time.toMinutesPart(), time.toSecondsPart(), true) : "__:__");
 	}
 
 	private void updateTimeLabel() {
