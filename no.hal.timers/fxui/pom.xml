@@ -56,9 +56,11 @@
 	<build>
 		<resources>
 			<resource>
-				<directory>src</directory>
+				<directory>src/main/java</directory>
 				<includes>
 					<include>**/*.fxml</include>
+					<include>**/*.csv</include>
+					<include>**/*.png</include>
 				</includes>
 			</resource>
 		</resources>

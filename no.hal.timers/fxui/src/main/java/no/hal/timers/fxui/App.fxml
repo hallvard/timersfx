@@ -8,6 +8,8 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 <?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="no.hal.timers.fxui.AppController">
@@ -21,14 +23,72 @@
 		<GridPane fx:id="competitionGrid">
 			<CheckBox fx:id="selectAllButton" onAction="#handleSelectAll"/>
 			<Label fx:id="participantLabel" text="Participant"/>
-			<Button fx:id="startButton">
+			<Button fx:id="startButton" style="-fx-background-color: transparent">
                 <graphic>
+                	<ImageView>
+                		<image>
+                			<Image url="@lrun_obj.png"/>
+                		</image>
+                	</ImageView>
+                <!-- 
                     <FontAwesomeIconView glyphName="FILE" size="36px" glyphStyle="-fx-fill: white" />
+                 -->
                 </graphic>
             </Button>
-			<TextField fx:id="timingKeyTextField" text="#"/>
-			<ToggleButton fx:id="editTimingKeysButton" onAction="#handleEditTimingKeys" text="/"/>
-			<Button fx:id="addTimingKeyButton" onAction="#handleAddTimingKey" text="+"/>
+			<Button fx:id="timeButton" style="-fx-background-color: transparent">
+                <graphic>
+                	<ImageView>
+                		<image>
+                			<Image url="@resume_co.png"/>
+                		</image>
+                	</ImageView>
+                </graphic>
+            </Button>
+			<ToggleButton fx:id="editTimingKeysButton" onAction="#handleEditTimingKeys">
+                <graphic>
+                	<ImageView>
+                		<image>
+                			<Image url="@write_obj.png"/>
+                		</image>
+                	</ImageView>
+                </graphic>
+			</ToggleButton>
+			<Button fx:id="addTimingKeyButton" onAction="#handleAddTimingKey" style="-fx-background-color: transparent">
+                <graphic>
+                	<ImageView>
+                		<image>
+                			<Image url="@monitorexpression_tsk.png"/>
+                		</image>
+                	</ImageView>
+                </graphic>
+			</Button>
+			<ToggleButton fx:id="editParticipantNamesButton" onAction="#handleEditParticipantNames">
+                <graphic>
+                	<ImageView>
+                		<image>
+                			<Image url="@write_obj.png"/>
+                		</image>
+                	</ImageView>
+                </graphic>
+			</ToggleButton>
+			<Button fx:id="addParticipantButton" onAction="#handleAddParticipant" style="-fx-background-color: transparent">
+                <graphic>
+                	<ImageView>
+                		<image>
+                			<Image url="@monitorexpression_tsk.png"/>
+                		</image>
+                	</ImageView>
+                </graphic>
+			</Button>
+			<Button fx:id="clearTextFieldButton" style="-fx-background-color: transparent">
+                <graphic>
+                	<ImageView>
+                		<image>
+                			<Image url="@delete_config.png"/>
+                		</image>
+                	</ImageView>
+                </graphic>
+			</Button>
 		</GridPane>
 	</center>
 </BorderPane>
