@@ -1,5 +1,7 @@
 package no.hal.timers.core;
 
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -8,17 +10,17 @@ import java.util.Optional;
 
 public class Competition {
 
-	private final List<Participation> participations;
+	// timing keys
 
 	private List<String> timingKeys = null;
-
-	public Competition() {
-		participations = new ArrayList<Participation>();
-	}
 
 	public List<String> getTimingKeys() {
 		return new ArrayList<String>(timingKeys);
 	}
+
+	// participations
+
+	private final List<Participation> participations = new ArrayList<Participation>();;
 
 	public Iterator<Participation> participations() {
 		return participations.iterator();
@@ -64,5 +66,25 @@ public class Competition {
 
 	public void removeParticipant(final Participant participant) {
 		getParticipation(participant).ifPresent(participation -> participation.setCompetition(null));
+	}
+
+	// time
+
+	private TimeProvider timeProvider = TimeProvider.SYSTEM_TIME_PROVIDER;
+
+	public void setTimeProvider(final TimeProvider timeProvider) {
+		this.timeProvider = timeProvider;
+	}
+
+	public LocalTime getCurrentTime() {
+		return timeProvider.get();
+	}
+
+	public Optional<LocalTime> getCurrentDuration(final Participation participation) {
+		final Optional<LocalTime> startTime = participation.getStartTime();
+		if (startTime.isPresent()) {
+			Duration.between(timeProvider.get(), startTime.get());
+		}
+		return Optional.empty();
 	}
 }

@@ -47,8 +47,8 @@ public class Participation {
 		return participant;
 	}
 
-	public LocalTime getStartTime() {
-		return (timings != null ? timings.getStartTime() : null);
+	public Optional<LocalTime> getStartTime() {
+		return (timings != null ? Optional.of(timings.getStartTime()) : Optional.empty());
 	}
 
 	public void start(final LocalTime time) {

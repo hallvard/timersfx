@@ -31,7 +31,7 @@ public class TimingsTest {
 		Assertions.assertEquals(LocalTime.of(12, 20), timings.getTime("12:20").get());
 	}
 
-	private <T> void checkTimes(final Iterator<T> times1, final T... times2) {
+	private <T> void checkTimes(final Iterator<T> times1, @SuppressWarnings("unchecked") final T... times2) {
 		for (int i = 0; i < times2.length; i++) {
 			Assertions.assertTrue(times1.hasNext());
 			Assertions.assertEquals(times2[i], times1.next());

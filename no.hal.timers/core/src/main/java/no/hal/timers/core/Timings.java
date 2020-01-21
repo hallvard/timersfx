@@ -3,7 +3,6 @@ package no.hal.timers.core;
 import java.time.Duration;
 import java.time.temporal.Temporal;
 import java.util.AbstractMap;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -37,7 +36,7 @@ public class Timings<K, T extends Temporal & Comparable<T>> {
 
 	private int timePos(final K key, final int start) {
 		if (timings != null) {
-			for (int i = start; i < timings.size(); i++) {
+			for (var i = start; i < timings.size(); i++) {
 				if (timings.get(i).getKey().equals(key)) {
 					return i;
 				}
@@ -51,7 +50,7 @@ public class Timings<K, T extends Temporal & Comparable<T>> {
 	}
 
 	public <R> Optional<R> withTime(final K key, final Function<Duration, R> fun) {
-		final int pos = timePos(key, 0);
+		final var pos = timePos(key, 0);
 		if (pos >= 0) {
 			return Optional.of(fun.apply(timings.get(pos).getValue()));
 		}
@@ -65,11 +64,11 @@ public class Timings<K, T extends Temporal & Comparable<T>> {
 		if (timings == null) {
 			timings = new ArrayList<Map.Entry<K, Duration>>();
 		}
-		final int pos = timePos(key, 0);
+		final var pos = timePos(key, 0);
 		if (time == null) {
 			timings.remove(pos);
 		} else {
-			final SimpleEntry<K, Duration> entry = new AbstractMap.SimpleEntry<K, Duration>(key, time);
+			final var entry = new AbstractMap.SimpleEntry<K, Duration>(key, time);
 			if (pos >= 0) {
 				timings.get(pos).setValue(time);
 			} else {
@@ -93,7 +92,7 @@ public class Timings<K, T extends Temporal & Comparable<T>> {
 		return withTime(key, Function.identity());
 	}
 
-	public Function<Duration, Temporal> timeOf = time -> getStartTime().plus(time);
+	public final Function<Duration, Temporal> timeOf = time -> getStartTime().plus(time);
 
 	public Optional<Temporal> getTime(final K key) {
 		if (getStartTime() != null) {
@@ -135,7 +134,7 @@ public class Timings<K, T extends Temporal & Comparable<T>> {
 
 			@Override
 			public Optional<R> next() {
-				final Optional<Duration> duration = getDuration(keys.next());
+				final var duration = getDuration(keys.next());
 				return  (duration.isPresent() ? Optional.of(fun.apply(duration.get())) : Optional.empty());
 			}
 		};
