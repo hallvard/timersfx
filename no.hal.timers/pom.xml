@@ -12,6 +12,10 @@
 		<module>fxui</module>
 	</modules>
 	
+	<properties>
+		<java.version>11</java.version>
+	</properties>
+	
 	<build>
 		<pluginManagement>
 			<plugins>
@@ -19,8 +23,8 @@
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>3.8.1</version>
 					<configuration>
-						<source>12</source>
-						<target>12</target>
+						<source>${java.version}</source>
+						<target>${java.version}</target>
 					</configuration>
 				</plugin>
 		        <plugin>
@@ -31,4 +35,11 @@
 			</plugins>
 		</pluginManagement>
 	</build>
+	
+	<pluginRepositories>
+        <pluginRepository>
+            <id>gluon-releases</id>
+            <url>http://nexus.gluonhq.com/nexus/content/repositories/releases/</url>
+        </pluginRepository>
+    </pluginRepositories>
 </project>

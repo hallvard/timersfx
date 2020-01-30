@@ -8,11 +8,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.HPos;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -20,14 +24,17 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.util.Callback;
 import no.hal.timers.core.Competition;
 import no.hal.timers.core.Participant;
 import no.hal.timers.core.Participation;
 import no.hal.timers.core.TimeProvider;
-import no.hal.timers.csv.CompetitionCsvReader;
 
 public class AppController {
 
@@ -43,7 +50,7 @@ public class AppController {
 	private CheckBox selectAllButton;
 
 	@FXML
-	private Label participantLabel;
+	private Node participantColumnHeader;
 
 	@FXML
 	private Button startButton;
@@ -52,16 +59,16 @@ public class AppController {
 	private Button timeButton;
 
 	@FXML
-	private ToggleButton editTimingKeysButton;
+	private Node timingKeysControls;
 
 	@FXML
-	private Button addTimingKeyButton;
+	private ToggleButton editTimingKeysButton;
 
 	@FXML
 	private ToggleButton editParticipantNamesButton;
 
-	@FXML
-	private Button addParticipantButton;
+	private final String participantNameFormat = "Løper %s";
+	private final String timingKeyFormat = "%s. runde";
 
 	@FXML
 	public void initialize() {
@@ -71,14 +78,18 @@ public class AppController {
 			timeline.getKeyFrames().add(new KeyFrame(javafx.util.Duration.seconds(1), event -> handleTimeChanged()));
 			timeline.playFromStart();
 		}
-		final CompetitionCsvReader reader = new CompetitionCsvReader();
-		try {
-			competition = reader.readCompetition(getClass().getResourceAsStream("sample2.csv"));
-			updateGrid();
-			clearSelection();
-		} catch (final Exception e) {
-			e.printStackTrace(System.err);
+		competition = new Competition();
+		final String[] timingKeys = new String[4];
+		for (var i = 0; i < timingKeys.length - 1; i++) {
+			timingKeys[i] = String.format(timingKeyFormat, i + 1);
 		}
+		timingKeys[timingKeys.length - 1] = "Mål";
+		competition.setTimingKeys(timingKeys);
+		for (var i = 0; i < 5; i++) {
+			competition.addParticipant(new Participant(String.format(participantNameFormat, i + 1)));
+		}
+		updateGrid();
+		clearSelection();
 	}
 
 	private final TimeProvider timeProvider = () -> LocalTime.now();
@@ -114,6 +125,7 @@ public class AppController {
 	private final Map<Participation, CheckBox> selectParticipationButtons = new HashMap<>();
 
 	private void clearSelection() {
+		selectAllButton.setSelected(false);
 		selection.clear();
 		for (final Participation participation : selectParticipationButtons.keySet() ) {
 			setSelected(participation, false);
@@ -184,109 +196,154 @@ public class AppController {
 	private void updateGrid() {
 		final var children = competitionGrid.getChildren();
 		children.clear();
+		final var columnConstraints = competitionGrid.getColumnConstraints();
+		columnConstraints.clear();
+
 		timeCallbacks.clear();
 
 		// add headers
 		var rowIndex = 0;
 		var columnIndex = 0;
 
+		addNode(participantColumnHeader, rowIndex, columnIndex++, children);
+		columnConstraints.add(new ColumnConstraints(110.0, Region.USE_COMPUTED_SIZE, Region.USE_PREF_SIZE, Priority.SOMETIMES, HPos.LEFT, true));
+		editParticipantNamesButton.setSelected(participantTextFields != null);
+
 		addNode(selectAllButton, rowIndex, columnIndex++, children);
-		addNode(participantLabel, rowIndex, columnIndex++, children);
+		columnConstraints.add(new ColumnConstraints(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE, Region.USE_PREF_SIZE, Priority.NEVER, HPos.CENTER, false));
+
 		registerAction(addNode(startButton, rowIndex, columnIndex++, children), startParticipationAction);
+		columnConstraints.add(new ColumnConstraints(60.0, Region.USE_COMPUTED_SIZE, Region.USE_PREF_SIZE, Priority.NEVER, HPos.CENTER, false));
 
 		final var timingKeys = competition.getTimingKeys();
 		for (final var timingKey : timingKeys) {
-			if (timingKeyTextFields != null) {
-				final var textField = addClearableTextField(timingKey, rowIndex, columnIndex, children);
-				timingKeyTextFields.add(textField);
-			} else {
-				final var timingKeyButton = addNode(new Button(), rowIndex, columnIndex++, children);
-				copyLookNFeel(timeButton, timingKeyButton);
-				timingKeyButton.setText(timingKey);
-				registerAction(timingKeyButton, new Action<Participation>() {
-					@Override
-					public boolean isFor(final Participation participation) {
-						return participation.getStatus() == Participation.Status.ACTIVE && (! participation.hasTime(timingKey));
-					}
-					@Override
-					public void doFor(final Participation participation) {
-						participation.time(timeProvider.get(), timingKey);
-					}
-				});
-			}
+			addTimingKeyColumnHeader(timingKey, rowIndex, columnIndex++, children);
+			columnConstraints.add(new ColumnConstraints(60.0, Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE, Priority.SOMETIMES, HPos.CENTER, false));
 		}
-		addNode(editTimingKeysButton, rowIndex, columnIndex++, children)
-		.setSelected(timingKeyTextFields != null);
-		addNode(addTimingKeyButton, rowIndex, columnIndex++, children);
+		addNode(timingKeysControls, rowIndex, columnIndex++, children);
+		columnConstraints.add(new ColumnConstraints(50.0, 50.0, 50.0, Priority.NEVER, HPos.CENTER, true));
+		editTimingKeysButton.setSelected(timingKeyTextFields != null);
+
 		rowIndex++;
 		columnIndex = 0;
 		final var participations = competition.participations();
 		while (participations.hasNext()) {
 			final var participation = participations.next();
 
-			final var selectButton = addNode(new CheckBox(), rowIndex, columnIndex++, children);
-			selectButton.setOnAction(event -> {
-				setSelected(participation, selectButton.isSelected());
-				selectAllButton.setSelected(false);
-			});
-			selectParticipationButtons.put(participation, selectButton);
+			addParticipantCell(participation, rowIndex, columnIndex++, children);
+			addSelectParticipantCell(participation, rowIndex, columnIndex++, children);
+			addParticipantStartCell(participation, rowIndex, columnIndex++, children);
 
-			final String participantName = participation.getParticipant().getName();
-			if (participantTextFields != null) {
-				final var textField = addClearableTextField(participantName, rowIndex, columnIndex++, children);
-				participantTextFields.add(textField);
-			} else {
-				addNode(new Label(participantName), rowIndex, columnIndex++, children);
-			}
-
-			if (participation.getStartTime().isPresent()) {
-				final var durationLabel = addNode(new Label(formatTime((Duration) null)), rowIndex, columnIndex++, children);
-				timeCallbacks.add(time -> {
-					final var startTime = participation.getStartTime();
-					final var durationString = formatTime(Duration.between(startTime.get(), participation.getCompetition().getCurrentTime()));
-					durationLabel.setText(durationString);
-					return null;
-				});
-			} else {
-				final var startParticipationButton = addNode(new Button(), rowIndex, columnIndex++, children);
-				copyLookNFeel(startButton, startParticipationButton);
-				startParticipationButton.setOnAction(event -> {
-					if (startParticipationAction.isFor(participation)) {
-						startParticipationAction.doFor(participation);
-						updateGrid();
-					}
-				});
-			}
 			var last = Duration.ZERO;
 			final var timingKeysIt = timingKeys.iterator();
 			while (timingKeysIt.hasNext()) {
 				final var timingKey = timingKeysIt.next();
+				final boolean isLast = timingKeysIt.hasNext();
+				addParticipantTimingCell(participation, timingKey, rowIndex, columnIndex++, last, isLast, children);
 				final var durationOpt = participation.getDuration(timingKey);
 				if (durationOpt.isPresent()) {
-					final var duration = durationOpt.get();
-					final var labelDuration = (timingKeysIt.hasNext() ? duration.minus(last) : duration);
-					last = duration;
-					addNode(new Label(formatTime(labelDuration)), rowIndex, columnIndex++, children);
-				} else {
-					final var timeParticipationButton = addNode(new Button(), rowIndex, columnIndex++, children);
-					copyLookNFeel(timeButton, timeParticipationButton);
-					timeParticipationButton.setText("");
-					timeParticipationButton.setOnAction(event -> {
-						if (participation.getStatus() == Participation.Status.ACTIVE && (! participation.hasTime(timingKey))) {
-							participation.time(timeProvider.get(), timingKey);
-							updateGrid();
-						}
-					});
+					last = durationOpt.get();
 				}
 			}
 			rowIndex++;
 			columnIndex = 0;
 		}
-		addNode(editParticipantNamesButton, rowIndex++, 1, children)
-		.setSelected(participantTextFields != null);
-		addNode(addParticipantButton, rowIndex++, 1, children);
-		rowIndex++;
-		columnIndex = 0;
+	}
+
+	private int addTimingKeyColumnHeader(final String timingKey, final int rowIndex, final int columnIndex,
+			final ObservableList<Node> children) {
+		if (timingKeyTextFields != null) {
+			final var textField = addClearableTextField(timingKey, rowIndex, columnIndex, children);
+			timingKeyTextFields.add(textField);
+		} else {
+			final var timingKeyButton = addNode(new Button(), rowIndex, columnIndex, children);
+			copyLookNFeel(timeButton, timingKeyButton, true);
+			timingKeyButton.setText(timingKey);
+			registerAction(timingKeyButton, new Action<Participation>() {
+				@Override
+				public boolean isFor(final Participation participation) {
+					return participation.getStatus() == Participation.Status.ACTIVE && (! participation.hasTime(timingKey));
+				}
+				@Override
+				public void doFor(final Participation participation) {
+					participation.time(timeProvider.get(), timingKey);
+				}
+			});
+		}
+		return columnIndex;
+	}
+
+	private Optional<Duration> addParticipantTimingCell(final Participation participation, final String timingKey, final int rowIndex,
+			final int columnIndex, final Duration lastDuration, final boolean isLast, final ObservableList<Node> children) {
+		final var durationOpt = participation.getDuration(timingKey);
+		if (durationOpt.isPresent()) {
+			final var duration = durationOpt.get();
+			final var labelDuration = (isLast ? duration.minus(lastDuration) : duration);
+			addNode(new Label(formatTime(labelDuration)), rowIndex, columnIndex, children);
+		} else {
+			final var timeParticipationButton = addNode(new Button(), rowIndex, columnIndex, children);
+			copyLookNFeel(timeButton, timeParticipationButton, false);
+			timeParticipationButton.setText("");
+			timeParticipationButton.setOnAction(event -> {
+				if (participation.getStatus() == Participation.Status.ACTIVE && (! participation.hasTime(timingKey))) {
+					participation.time(timeProvider.get(), timingKey);
+					updateGrid();
+				}
+			});
+		}
+		return durationOpt;
+	}
+
+	private int addParticipantStartCell(final Participation participation, final int rowIndex, final int columnIndex,
+			final ObservableList<Node> children) {
+		if (participation.getStartTime().isPresent()) {
+			final var durationLabel = addNode(new Label(formatDuration(participation)), rowIndex, columnIndex, children);
+			timeCallbacks.add(time -> {
+				durationLabel.setText(formatDuration(participation));
+				return null;
+			});
+		} else {
+			final var startParticipationButton = addNode(new Button(), rowIndex, columnIndex, children);
+			copyLookNFeel(startButton, startParticipationButton, false);
+			startParticipationButton.setOnAction(event -> {
+				if (startParticipationAction.isFor(participation)) {
+					startParticipationAction.doFor(participation);
+					updateGrid();
+				}
+			});
+		}
+		return columnIndex;
+	}
+
+	private String formatDuration(final Participation participation) {
+		final Optional<LocalTime> startTime = participation.getStartTime();
+		return formatTime(Duration.between(startTime.get(), participation.getCompetition().getCurrentTime()));
+	}
+
+	private int addSelectParticipantCell(final Participation participation, final int rowIndex, final int columnIndex,
+			final ObservableList<Node> children) {
+		final var selectButton = addNode(new CheckBox(), rowIndex, columnIndex, children);
+		selectButton.setOnAction(event -> {
+			setSelected(participation, selectButton.isSelected());
+			selectAllButton.setSelected(false);
+		});
+		selectParticipationButtons.put(participation, selectButton);
+		return columnIndex;
+	}
+
+	private int addParticipantCell(final Participation participation, final int rowIndex, final int columnIndex,
+			final ObservableList<Node> children) {
+		final String participantName = participation.getParticipant().getName();
+		if (participantTextFields != null) {
+			final var textField = addClearableTextField(participantName, rowIndex, columnIndex, children);
+			participantTextFields.add(textField);
+		} else {
+			final Pane pane = addNode(new Pane(), rowIndex, columnIndex, children);
+			pane.getStyleClass().add(rowIndex % 2 == 0 ? "even-row" : "odd-row");
+			pane.getChildren().add(new Label(participantName));
+			//			addNode(new Label(participantName), rowIndex, columnIndex, children);
+		}
+		return columnIndex;
 	}
 
 	@FXML
@@ -375,14 +432,15 @@ public class AppController {
 	private TextField addClearableTextField(final String text, final int rowIndex, final int columnIndex, final Collection<Node> children) {
 		final var textField = new TextField(text);
 		final var clearButton = new Button();
-		copyLookNFeel(clearTextFieldButton, clearButton);
+		copyLookNFeel(clearTextFieldButton, clearButton, true);
 		clearButton.setOnAction(event -> textField.clear());
-		addNode(new HBox(textField, clearButton), rowIndex, columnIndex, children);
+		final HBox box = addNode(new HBox(textField, clearButton), rowIndex, columnIndex, children);
+		box.setAlignment(Pos.CENTER);
 		return textField;
 	}
 
 	private <T extends Node> T addNode(final T node, final int rowIndex, final int columnIndex, final Collection<Node> children) {
-		System.out.println("Adding " + node + " @ " + rowIndex + ", " + columnIndex);
+		//		System.out.println("Adding " + node + " @ " + rowIndex + ", " + columnIndex);
 		GridPane.setConstraints(node, columnIndex, rowIndex);
 		children.add(node);
 		return node;
@@ -393,11 +451,17 @@ public class AppController {
 		target.getStyleClass().addAll(source.getStyleClass());
 	}
 
-	private void copyLookNFeel(final Button source, final Button target) {
-		copyLookNFeel((Node) source, (Node) target);
+	private void copyLookNFeel(final Button source, final Button target, final boolean includeScaling) {
+		copyLookNFeel(source, target);
 		target.setText(source.getText());
 		if (source.getGraphic() instanceof ImageView) {
-			target.setGraphic(new ImageView(((ImageView) source.getGraphic()).getImage()));
+			final ImageView sourceImageView = (ImageView) source.getGraphic();
+			final ImageView targeImageView = new ImageView(sourceImageView.getImage());
+			target.setGraphic(targeImageView);
+			if (includeScaling) {
+				targeImageView.setScaleX(sourceImageView.getScaleX());
+				targeImageView.setScaleY(sourceImageView.getScaleY());
+			}
 		}
 	}
 

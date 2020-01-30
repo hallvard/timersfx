@@ -37,6 +37,18 @@
 			<groupId>org.junit.platform</groupId>
 			<artifactId>junit-platform-commons</artifactId>
 			<version>1.5.2</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
+	<build>
+		<testResources>
+			<testResource>
+				<directory>src/test/java</directory>
+				<includes>
+					<include>**/*.csv</include>
+				</includes>
+			</testResource>
+		</testResources>
+	</build>
 </project>
