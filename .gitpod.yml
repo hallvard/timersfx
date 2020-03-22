@@ -2,7 +2,10 @@ image:
   file: .gitpod.dockerfile
 
 tasks:
-  - init: sdk use java 12.0.2.j9-adpt
+  - init: |
+      sdk use java 12.0.2.j9-adpte
+      cd no.hal.timers
+      mvn compile
 
 ports:
   # used by virtual desktop and vnc, supports JavaFX
