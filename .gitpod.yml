@@ -3,9 +3,9 @@ image:
 
 tasks:
   - init: |
-      # sdk use java 12.0.2.j9-adpt
       cd no.hal.timers
-      mvn compile
+      mvn install
+      echo "run 'cd fxui.android; mvn client:build client:package' to build apk"
 
 ports:
   # used by virtual desktop and vnc, supports JavaFX
