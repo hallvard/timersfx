@@ -5,7 +5,7 @@ tasks:
   - init: |
       cd no.hal.timers
       mvn install
-      echo "run 'cd fxui; mvn -Pandroid client:build client:package client:install to build apk"
+      echo "run 'cd fxui; mvn -D"client.target=android" client:build client:package client:install to build apk"
 
 ports:
   # used by virtual desktop and vnc, supports JavaFX
