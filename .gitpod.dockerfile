@@ -11,6 +11,7 @@ RUN mkdir /usr/local/graalvm && \
     tar -xf graalvm-ce-java11-linux-amd64-20.2.0.tar.gz && \
     rm graalvm-ce-java11-linux-amd64-20.2.0.tar.gz
 ENV GRAALVM_HOME=/usr/local/graalvm/graalvm-ce-java11-20.2.0
+RUN $GRAALVM_HOME/bin/gu install native-image
 RUN bash -c ". /home/gitpod/.sdkman/bin/sdkman-init.sh \
              && sdk install java graal-20+2 /usr/local/graalvm/graalvm-ce-java11-20.2.0 \
              && sdk default java graal-20+2"

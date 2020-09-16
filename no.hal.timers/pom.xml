@@ -35,11 +35,12 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-	
+	<!--
 	<pluginRepositories>
         <pluginRepository>
             <id>gluon-releases</id>
             <url>http://nexus.gluonhq.com/nexus/content/repositories/releases/</url>
         </pluginRepository>
     </pluginRepositories>
+    -->
 </project>
