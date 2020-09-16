@@ -11,5 +11,5 @@ RUN wget https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-20.2.
 ENV GRAALVM_HOME=$HOME/graalvm-ce-java11-20.2.0
 RUN $GRAALVM_HOME/bin/gu install native-image
 RUN bash -c ". /home/gitpod/.sdkman/bin/sdkman-init.sh \
-             && sdk install java graal-20+2 /usr/local/graalvm/graalvm-ce-java11-20.2.0 \
+             && sdk install java graal-20+2 $GRAALVM_HOME \
              && sdk default java graal-20+2"
