@@ -5,5 +5,5 @@ import java.util.function.Supplier;
 
 public interface TimeProvider extends Supplier<LocalTime> {
 
-	final TimeProvider SYSTEM_TIME_PROVIDER = () -> LocalTime.now();
+  final TimeProvider SYSTEM_TIME_PROVIDER = () -> LocalTime.now();
 }

@@ -1,0 +1,61 @@
+name: Android
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # - uses: actions/checkout@v3
+
+      # - name: Setup Java 17
+      #   uses: actions/setup-java@v4
+      #   with:
+      #     distribution: 'temurin'
+      #     java-version: '17'
+      #     cache: 'maven'
+
+      - name: Setup Java 17 and Maven 3.8.8
+        uses: s4u/setup-maven-action@v1.18.0
+        with:
+          java-distribution: 'temurin'
+          java-version: '17'
+          maven-version: '3.8.8'
+
+      - name: mvn package
+        run: cd no.hal.timers && mvn --batch-mode --update-snapshots install -Pandroid -Dci=gha
+
+      - name: Setup Gluon's GraalVM
+        uses: gluonhq/setup-graalvm@master
+        with:
+          graalvm: '22.1.0.1-Final'
+          jdk: 'java17'
+          # arch: 'aarch64'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install linux libraries
+        run: |
+          sudo apt-get update
+          sudo apt install libasound2-dev libavcodec-dev libavformat-dev libavutil-dev libgl-dev libgtk-3-dev libpango1.0-dev libxtst-dev
+
+      - name: mvn gluonfx:build
+        run: |
+          export ANDROID_SDK=$ANDROID_HOME
+          cd no.hal.timers && mvn --batch-mode --update-snapshots gluonfx:build gluonfx:package -f fxui -Pandroid
+
+      - name: Tree view of gluon build files
+        run: tree no.hal.timers/fxui/target/gluonfx
+
+      - name: Copy packages to staging
+        run: |
+          mkdir staging
+          cp no.hal.timers/fxui/target/gluonfx/aarch64-android/gvm/timersfx.apk staging
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: staging

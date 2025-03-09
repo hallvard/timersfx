@@ -4,7 +4,7 @@
 }
 
 .button {
-	-fx-background-color: transparent;
+  -fx-background-color: transparent;
     -fx-font-family: 'Arial';
     -fx-font-size: 1.3em;
     -fx-padding: 0
@@ -31,9 +31,9 @@
 }
 
 #timingKeysControls {
-    -fx-padding: 5;	
+    -fx-padding: 5;  
 }
 
 .even-row {
-	-fx-background-color: lightgray;
+  -fx-background-color: lightgray;
 }
