@@ -92,7 +92,6 @@
                                 <list>no.hal.timers.fx.TimersFxApp</list>
                             </bundlesList>
                             <reflectionList>
-                                <list>javafx.fxml.FXMLLoader</list>
                                 <list>no.hal.timers.fx.TimersFxAppController</list>
                             </reflectionList>
                             <releaseConfiguration>

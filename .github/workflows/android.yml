@@ -26,7 +26,7 @@ jobs:
           maven-version: '3.8.8'
 
       - name: mvn package
-        run: cd no.hal.timers && mvn --batch-mode --update-snapshots install -Pandroid -Dci=gha
+        run: cd timersfx && mvn --batch-mode --update-snapshots install -Pandroid -Dci=gha
 
       - name: Setup Gluon's GraalVM
         uses: gluonhq/setup-graalvm@master
@@ -44,15 +44,15 @@ jobs:
       - name: mvn gluonfx:build
         run: |
           export ANDROID_SDK=$ANDROID_HOME
-          cd no.hal.timers && mvn --batch-mode --update-snapshots gluonfx:build gluonfx:package -f fxui -Pandroid
+          cd timersfx && mvn --batch-mode --update-snapshots gluonfx:build gluonfx:package -f fxui -Pandroid
 
       - name: Tree view of gluon build files
-        run: tree no.hal.timers/fxui/target/gluonfx
+        run: tree timersfx/fxui/target/gluonfx
 
       - name: Copy packages to staging
         run: |
           mkdir staging
-          cp no.hal.timers/fxui/target/gluonfx/aarch64-android/gvm/timersfx.apk staging
+          cp timersfx/fxui/target/gluonfx/aarch64-android/gvm/fxui.apk staging
 
       - name: Upload
         uses: actions/upload-artifact@v4
