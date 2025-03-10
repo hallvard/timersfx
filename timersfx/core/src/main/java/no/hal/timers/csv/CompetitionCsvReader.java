@@ -4,6 +4,7 @@ import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -11,12 +12,22 @@ import no.hal.timers.core.Competition;
 import no.hal.timers.core.Participant;
 import no.hal.timers.core.Participation;
 
+/**
+ * Reads a competition from a CSV file.
+ */
 public class CompetitionCsvReader {
 
   private final boolean columnsAreTotals = false;
   private final boolean lastColumnIsTotal = true;
   private final boolean emptyColumnsAreTime = true;
 
+  /**
+   * Reads a competition from a CSV file.
+   *
+   * @param input the input stream
+   * @return the resulting competition
+   * @throws Exception if error occurs
+   */
   public Competition readCompetition(final InputStream input) throws Exception {
     var settings = new CsvParserSettings();
     settings.getFormat().setLineSeparator("\n");
@@ -24,7 +35,7 @@ public class CompetitionCsvReader {
     var parser = new CsvParser(settings);
 
     // parses all rows in one go.
-    var allRows = parser.parseAll(new InputStreamReader(input, "UTF-8"));
+    var allRows = parser.parseAll(new InputStreamReader(input, StandardCharsets.UTF_8));
     var timingKeys = new ArrayList<String>();
     var headers = allRows.get(0);
 
@@ -62,12 +73,14 @@ public class CompetitionCsvReader {
         var header = headers[colNum];
         if (timingKeys.contains(header)) {
           if (colNum < row.length) {
-            var nLast = headers.length - colNum - 1;
+            var nthLast = headers.length - colNum - 1;
             var duration = parseDuration(row[colNum].trim());
             if (duration != null) {
               total = total.plus(duration);
-              var time = (columnsAreTotals || (nLast == 0 && lastColumnIsTotal) ? duration : total);
-              var timingKey = (nLast == 0 ? Participation.Status.FINISH.name() : header);
+              var time = (columnsAreTotals || (nthLast == 0 && lastColumnIsTotal)
+                  ? duration
+                  : total);
+              var timingKey = (nthLast == 0 ? Participation.Status.FINISH.name() : header);
               participation.time(time, timingKey);
             }
           }

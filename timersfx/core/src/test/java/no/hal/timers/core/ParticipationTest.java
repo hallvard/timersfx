@@ -7,11 +7,17 @@ import no.hal.timers.core.Participation.Status;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Test class for Participation.
+ */
 public class ParticipationTest {
 
   private Competition competition;
   private Participation participation;
 
+  /**
+   * Set up the Participation and Competion instances.
+   */
   @BeforeEach
   public void setUp() {
     competition = new Competition();

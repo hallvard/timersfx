@@ -10,10 +10,16 @@ import java.util.Iterator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Test class for Timings.
+ */
 public class TimingsTest {
 
   private Timings<String, LocalTime> timings;
 
+  /**
+   * Set up the Timings instance.
+   */
   @BeforeEach
   public void setUp() {
     timings = new Timings<String, LocalTime>();
@@ -33,7 +39,7 @@ public class TimingsTest {
     assertEquals(LocalTime.of(12, 20), timings.getTime("12:20").get());
   }
 
-  private <T> void checkTimes(final Iterator<T> times1, @SuppressWarnings("unchecked") final T... times2) {
+  private <T> void checkTimes(Iterator<T> times1, @SuppressWarnings("unchecked") T... times2) {
     for (int i = 0; i < times2.length; i++) {
       assertTrue(times1.hasNext());
       assertEquals(times2[i], times1.next());

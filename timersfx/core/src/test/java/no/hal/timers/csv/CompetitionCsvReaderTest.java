@@ -11,10 +11,16 @@ import no.hal.timers.core.Participation.Status;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Test class for CompetitionCsvReader.
+ */
 public class CompetitionCsvReaderTest {
 
   private CompetitionCsvReader compCsvReader;
 
+  /**
+   * Set up the CompetitionCsvReader instance.
+   */
   @BeforeEach
   public void setUp() {
     compCsvReader = new CompetitionCsvReader();

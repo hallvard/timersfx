@@ -3,11 +3,13 @@ package no.hal.timers.core;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * A competition, the main container class.
+ */
 public class Competition {
 
   // timing keys
@@ -22,6 +24,11 @@ public class Competition {
 
   private final List<Participation> participations = new ArrayList<Participation>();
 
+  /**
+   * An iterator over the participations.
+   *
+   * @return an iterator over the participations
+   */
   public Iterator<Participation> participations() {
     return participations.iterator();
   }
@@ -30,32 +37,56 @@ public class Competition {
     return participations.size();
   }
 
-  public Participation getParticipation(final int num) {
+  /**
+   * Get a participation by index.
+   *
+   * @param num the index
+   * @return the participation at the index
+   */
+  public Participation getParticipation(int num) {
     return participations.get(num);
   }
 
-  public Optional<Participation> getParticipation(final Participant participant) {
+  /**
+   * Get a participation for a participant.
+   *
+   * @param participant the participant
+   * @return the participation for the participant, wrapped in an Optional
+   */
+  public Optional<Participation> getParticipation(Participant participant) {
     return participations.stream()
         .filter(participation -> participation.isFor(participant))
         .findFirst();
   }
 
-  public void setTimingKeys(final String... keys) {
-    timingKeys = Arrays.asList(keys);
+  public void setTimingKeys(String... keys) {
+    timingKeys = List.of(keys);
   }  
 
-  public boolean hasParticipant(final Participant participant) {
+  /**
+   * Check if a participant is in the competition.
+   *
+   * @param participant the participant to check
+   * @return true if the participant is in the competition
+   */
+  public boolean hasParticipant(Participant participant) {
     return participations.stream()
         .anyMatch(participation -> participation.isFor(participant));
   }  
 
-  void addParticipation(final Participation participation) {
+  void addParticipation(Participation participation) {
     if (! participations.contains(participation)) {
       participations.add(participation);
     }
   }
 
-  public Participation addParticipant(final Participant participant) {
+  /**
+   * Add a participant to the competition, if not already present.
+   *
+   * @param participant the participant to add
+   * @return the participation added, or null if the participant was already present
+   */
+  public Participation addParticipant(Participant participant) {
     if (! hasParticipant(participant)) {
       // will call addParticipation
       return new Participation(participant, this);
@@ -63,11 +94,16 @@ public class Competition {
     return null;
   }
 
-  void removeParticipation(final Participation participation) {
+  void removeParticipation(Participation participation) {
     participations.remove(participation);
   }
 
-  public void removeParticipant(final Participant participant) {
+  /**
+   * Remove a participant from the competition.
+   *
+   * @param participant the participant to remove
+   */
+  public void removeParticipant(Participant participant) {
     getParticipation(participant)
         .ifPresent(participation -> participation.setCompetition(null));
   }
@@ -76,7 +112,7 @@ public class Competition {
 
   private TimeProvider timeProvider = TimeProvider.SYSTEM_TIME_PROVIDER;
 
-  public void setTimeProvider(final TimeProvider timeProvider) {
+  public void setTimeProvider(TimeProvider timeProvider) {
     this.timeProvider = timeProvider;
   }
 
@@ -84,11 +120,14 @@ public class Competition {
     return timeProvider.get();
   }
 
-  public Optional<LocalTime> getCurrentDuration(final Participation participation) {
-    final Optional<LocalTime> startTime = participation.getStartTime();
-    if (startTime.isPresent()) {
-      Duration.between(timeProvider.get(), startTime.get());
-    }
-    return Optional.empty();
+  /**
+   * Get the current duration for a participation, if it has started.
+   *
+   * @param participation the participation
+   * @return the current duration, wrapped in an Optional
+   */
+  public Optional<Duration> getCurrentDuration(Participation participation) {
+    return participation.getStartTime()
+      .map(startTime -> Duration.between(timeProvider.get(), startTime));
   }
 }
