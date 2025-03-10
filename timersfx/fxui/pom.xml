@@ -170,7 +170,7 @@
                                 <skipSigning>true</skipSigning>
                                 <!-- Android -->
                                 <appLabel>timersfx</appLabel>
-                                <versionCode>1</versionCode>
+                                <versionCode>2</versionCode>
                                 <versionName>1.0</versionName>
                                 <!--
                                 <providedKeyStorePath>${android-keystore-path}</providedKeyStorePath>
