@@ -9,59 +9,24 @@ import java.util.Optional;
  * Class representing a participant taking part in a competition.
  * Keeps track of the participant's status and timings.
  */
-public class Participation {
-
-  /**
-   * The possible statuses for a participation.
-   */
-  public static enum Status {
-    INACTIVE, START, ACTIVE, FINISH, STOP;
-  }
-
-  private final Participant participant;
-  private Competition competition = null;
-
-  /**
-   * Initializes with the participant and the competition it takes part in.
-   *
-   * @param participant the participant
-   * @param competition the competition
-   */
-  public Participation(Participant participant, Competition competition) {
-    this.participant = participant;
-    setCompetition(competition);
-  }
+public record Participation(Participant participant, Timings<String, LocalTime> timings) {
 
   /**
    * Initializes with the participant.
    *
    * @param participant the participant
    */
-  public Participation(Participant participant) {
-    this(participant, null);
-  }
 
-  public Competition getCompetition() {
-    return competition;
+   public Participation(Participant participant) {
+    this(participant, new Timings<String, LocalTime>());
   }
 
   /**
-   * Sets the competition for the participation.
-   * Updates the competition's list of participations accordingly.
-   *
-   * @param competition the competition (may be null)
+   * The possible statuses for a participation.
    */
-  public void setCompetition(Competition competition) {
-    if (this.competition != null) {
-      this.competition.removeParticipation(this);
-    }
-    this.competition = competition;
-    if (this.competition != null) {
-      this.competition.addParticipation(this);
-    }
+  public static enum Status {
+    START, ACTIVE, FINISH, STOP;
   }
-
-  private Timings<String, LocalTime> timings;
 
   /**
    * Checks if the participation is for a given participant.
@@ -78,7 +43,7 @@ public class Participation {
   }
 
   public Optional<LocalTime> getStartTime() {
-    return (timings != null ? Optional.of(timings.getStartTime()) : Optional.empty());
+    return Optional.ofNullable(timings.getStartTime());
   }
 
   /**
@@ -87,14 +52,7 @@ public class Participation {
    * @param time the time to start
    */
   public void start(LocalTime time) {
-    ensureTimings();
     timings.setStartTime(time);
-  }
-
-  private void ensureTimings() {
-    if (timings == null) {
-      timings = new Timings<String, LocalTime>();
-    }
   }
 
   /**
@@ -132,7 +90,6 @@ public class Participation {
    * @param key the key
    */
   public void time(Duration time, String key) {
-    ensureTimings();
     timings.setTime(time, key);
   }
 
@@ -153,7 +110,6 @@ public class Participation {
    * @param key the key
    */
   public void time(LocalTime time, String key) {
-    ensureTimings();
     timings.setTime(time, key);
   }
 
@@ -173,7 +129,7 @@ public class Participation {
         return Status.ACTIVE;
       }
     }
-    return (competition != null ? Status.START : Status.INACTIVE);
+    return Status.START;
   }
 
   /**
@@ -183,7 +139,7 @@ public class Participation {
    * @return the duration, wrapped in an Optional
    */
   public Optional<Duration> getDuration(String key) {
-    return (timings != null ? timings.getDuration(key) : Optional.empty());
+    return timings.getDuration(key);
   }
 
   /**
@@ -193,7 +149,7 @@ public class Participation {
    * @return true if the participation has a time for the key
    */
   public boolean hasTime(String key) {
-    return timings != null && timings.hasTime(key);
+    return timings.hasTime(key);
   }
 
   /**
@@ -203,6 +159,6 @@ public class Participation {
    * @return the time, wrapped in an Optional
    */
   public Optional<Temporal> getTime(String key) {
-    return (timings != null ? timings.getTime(key) : Optional.empty());
+    return timings.getTime(key);
   }
 }

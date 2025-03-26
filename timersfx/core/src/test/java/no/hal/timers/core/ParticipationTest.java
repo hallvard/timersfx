@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 public class ParticipationTest {
 
   private Competition competition;
+  private Participant participant;
   private Participation participation;
 
   /**
@@ -21,18 +22,13 @@ public class ParticipationTest {
   @BeforeEach
   public void setUp() {
     competition = new Competition();
-    participation = new Participation(null);
+    participant = new Participant("Hallvard");
+    participation = competition.addParticipant(participant);
   }
 
   @Test
-  public void testInitialStatusIsInactive() {
-    assertSame(Participation.Status.INACTIVE, participation.getStatus());
-  }
-
-  @Test
-  public void testAfterSetCompetitionStatusIsStart() {
-    participation.setCompetition(competition);
-    assertSame(Status.START, participation.getStatus());
+  public void testInitialStatusIsStart() {
+    assertSame(Participation.Status.START, participation.getStatus());
   }
 
   @Test

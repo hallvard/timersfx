@@ -38,15 +38,14 @@ public class CompetitionCsvReaderTest {
 
   @Test
   public void testSample1() throws Exception {
-    var reader = new CompetitionCsvReader();
-    var competition = reader.readCompetition(getClass().getResourceAsStream("sample1.csv"));
+    var competition = compCsvReader.readCompetition(getClass().getResourceAsStream("sample1.csv"));
 
     var expectedTimingKeys = Arrays.asList("1.runde", "2.runde", "3.runde", "4.runde", "FINISH");
     assertEquals(expectedTimingKeys.size(), competition.getTimingKeys().size());
     assertTrue(competition.getTimingKeys().containsAll(expectedTimingKeys));
 
     assertEquals(6, competition.getParticipationCount());
-    var participations = competition.participations();
+    var participations = competition.iterator();
 
     var p1 = participations.next();
     assertEquals(Duration.ofSeconds(13 * 60 + 00), p1.getDuration("1.runde").get());

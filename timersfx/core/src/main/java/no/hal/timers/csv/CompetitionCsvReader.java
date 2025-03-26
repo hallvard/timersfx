@@ -13,7 +13,7 @@ import no.hal.timers.core.Participant;
 import no.hal.timers.core.Participation;
 
 /**
- * Reads a competition from a CSV file.
+ * Reads a competition from a CSV source.
  */
 public class CompetitionCsvReader {
 
@@ -28,13 +28,13 @@ public class CompetitionCsvReader {
    * @return the resulting competition
    * @throws Exception if error occurs
    */
-  public Competition readCompetition(final InputStream input) throws Exception {
+  public Competition readCompetition(final InputStream input) {
     var settings = new CsvParserSettings();
     settings.getFormat().setLineSeparator("\n");
     settings.getFormat().setDelimiter(',');
     var parser = new CsvParser(settings);
 
-    // parses all rows in one go.
+    // parses all rows in one go
     var allRows = parser.parseAll(new InputStreamReader(input, StandardCharsets.UTF_8));
     var timingKeys = new ArrayList<String>();
     var headers = allRows.get(0);

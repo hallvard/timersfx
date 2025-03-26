@@ -19,6 +19,7 @@
     <HBox styleClass="spacer">
       <Label text="%timeLabel.text"/>
       <Label fx:id="timeLabel" text="__:__:__"/>
+      <Button text="Copy CSV" onAction="#handleCopyCsvToClipboard"/>
     </HBox>
   </top>
   <center>

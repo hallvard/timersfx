@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -23,17 +24,19 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.DataFormat;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
-import javafx.util.Callback;
 import no.hal.timers.core.Competition;
 import no.hal.timers.core.Participant;
 import no.hal.timers.core.Participation;
 import no.hal.timers.core.TimeProvider;
+import no.hal.timers.csv.CompetitionCsvWriter;
 
 /**
  * Controller for the app as a whole.
@@ -115,13 +118,13 @@ public class TimersFxAppController {
         : "__:__");
   }
 
-  private final Collection<Callback<LocalTime, Void>> timeCallbacks = new ArrayList<>();
+  private final Collection<Consumer<LocalTime>> timeCallbacks = new ArrayList<>();
 
   private void handleTimeChanged() {
     LocalTime time = timeProvider.get();
     timeLabel.setText(formatTime(time));
-    for (Callback<LocalTime, Void> timeCallback : timeCallbacks) {
-      timeCallback.call(time);
+    for (Consumer<LocalTime> timeCallback : timeCallbacks) {
+      timeCallback.accept(time);
     }
   }
 
@@ -240,10 +243,7 @@ public class TimersFxAppController {
 
     rowIndex++;
     columnIndex = 0;
-    var participations = competition.participations();
-    while (participations.hasNext()) {
-      var participation = participations.next();
-
+    for (var participation : competition) {
       addParticipantCell(participation, rowIndex, columnIndex++, children);
       addSelectParticipantCell(participation, rowIndex, columnIndex++, children);
       addParticipantStartCell(participation, rowIndex, columnIndex++, children);
@@ -322,10 +322,7 @@ public class TimersFxAppController {
     if (participation.getStartTime().isPresent()) {
       var durationLabel = addNode(new Label(formatDuration(participation)),
           rowIndex, columnIndex, children);
-      timeCallbacks.add(time -> {
-        durationLabel.setText(formatDuration(participation));
-        return null;
-      });
+      timeCallbacks.add(time -> durationLabel.setText(formatDuration(participation)));
     } else {
       var startParticipationButton = addNode(new Button(), rowIndex, columnIndex, children);
       copyLookAndFeel(startButton, startParticipationButton, false);
@@ -341,7 +338,7 @@ public class TimersFxAppController {
 
   private String formatDuration(Participation participation) {
     var duration = Duration.between(participation.getStartTime().get(),
-        participation.getCompetition().getCurrentTime());
+        competition.getCurrentTime());
     return formatTime(duration);
   }
 
@@ -502,5 +499,11 @@ public class TimersFxAppController {
     setSelection(selectAllButton.isSelected()
         ? selectParticipationButtons.keySet()
         : Collections.emptyList());
+  }
+
+  @FXML
+  void handleCopyCsvToClipboard() {
+    var csv = new CompetitionCsvWriter().toString(competition);
+    Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, csv));
   }
 }

@@ -3,6 +3,7 @@ package no.hal.timers.core;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -10,14 +11,14 @@ import java.util.Optional;
 /**
  * A competition, the main container class.
  */
-public class Competition {
+public class Competition implements Iterable<Participation> {
 
   // timing keys
 
   private List<String> timingKeys = null;
 
   public List<String> getTimingKeys() {
-    return new ArrayList<String>(timingKeys);
+    return Collections.unmodifiableList(timingKeys);
   }
 
   // participations
@@ -29,7 +30,8 @@ public class Competition {
    *
    * @return an iterator over the participations
    */
-  public Iterator<Participation> participations() {
+  @Override
+  public Iterator<Participation> iterator() {
     return participations.iterator();
   }
 
@@ -74,10 +76,7 @@ public class Competition {
         .anyMatch(participation -> participation.isFor(participant));
   }  
 
-  void addParticipation(Participation participation) {
-    if (! participations.contains(participation)) {
-      participations.add(participation);
-    }
+  private void addParticipation(Participation participation) {
   }
 
   /**
@@ -88,8 +87,9 @@ public class Competition {
    */
   public Participation addParticipant(Participant participant) {
     if (! hasParticipant(participant)) {
-      // will call addParticipation
-      return new Participation(participant, this);
+      var participation = new Participation(participant);
+      participations.add(participation);
+      return participation;
     }
     return null;
   }
@@ -105,7 +105,7 @@ public class Competition {
    */
   public void removeParticipant(Participant participant) {
     getParticipation(participant)
-        .ifPresent(participation -> participation.setCompetition(null));
+        .ifPresent(participation -> participations.remove(participation));
   }
 
   // time
@@ -129,5 +129,6 @@ public class Competition {
   public Optional<Duration> getCurrentDuration(Participation participation) {
     return participation.getStartTime()
       .map(startTime -> Duration.between(timeProvider.get(), startTime));
+
   }
 }
