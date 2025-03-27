@@ -10,6 +10,13 @@
     -fx-padding: 0
 }
 
+.toggle-button {
+  -fx-background-color: transparent;
+    -fx-font-family: 'Arial';
+    -fx-font-size: 1.3em;
+    -fx-padding: 0
+}
+
 .text-field {
     -fx-font-family: 'Arial';
     -fx-font-size: 1.3em;

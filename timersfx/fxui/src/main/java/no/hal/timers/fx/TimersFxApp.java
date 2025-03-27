@@ -13,8 +13,8 @@ import javafx.stage.Stage;
 public class TimersFxApp extends Application {
 
   @Override
-  public void start(final Stage primaryStage) throws Exception {
-    final Parent parent = FXMLLoader.load(TimersFxApp.class.getResource("TimersFxApp.fxml"),
+  public void start(Stage primaryStage) throws Exception {
+    Parent parent = FXMLLoader.load(TimersFxApp.class.getResource("TimersFxApp.fxml"),
         ResourceBundle.getBundle("no.hal.timers.fx.TimersFxApp"));
     primaryStage.setX(20);
     primaryStage.setY(20);
@@ -27,7 +27,7 @@ public class TimersFxApp extends Application {
    *
    * @param args the command-line arguments
    */
-  public static void main(final String[] args) {
+  public static void main(String[] args) {
     launch(args);
   }
 }

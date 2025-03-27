@@ -28,7 +28,7 @@ public class CompetitionCsvReader {
    * @return the resulting competition
    * @throws Exception if error occurs
    */
-  public Competition readCompetition(final InputStream input) {
+  public Competition readCompetition(InputStream input) {
     var settings = new CsvParserSettings();
     settings.getFormat().setLineSeparator("\n");
     settings.getFormat().setDelimiter(',');
@@ -90,24 +90,24 @@ public class CompetitionCsvReader {
     return comp;
   }
 
-  private boolean isTiming(final String value) {
+  private boolean isTiming(String value) {
     if (parseDuration(value) != null) {
       return true;
     }
     return false;
   }
 
-  Duration parseDuration(final String value) {
+  Duration parseDuration(String value) {
     var split = value.split(":");
     var times = new int[split.length];
     for (var i = 0; i < split.length; i++) {
       try {
         times[i] = Integer.valueOf(split[i]);
-      } catch (final NumberFormatException e) {
+      } catch (NumberFormatException e) {
         return null;
       }
     }
-    final int[] durations = { 60, 60, 1 };
+    int[] durations = { 60, 60, 1 };
     var seconds = 0;
     var duration = 1;
     for (var i = 0; i < times.length; i++) {

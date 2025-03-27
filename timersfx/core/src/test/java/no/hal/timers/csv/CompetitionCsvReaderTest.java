@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import no.hal.timers.core.Participation;
 import no.hal.timers.core.Participation.Status;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,7 +58,7 @@ public class CompetitionCsvReaderTest {
     participations.next();
     participations.next();
 
-    final Participation p6 = participations.next();
+    var p6 = participations.next();
     assertEquals(Duration.ofSeconds(11 * 60 + 30), p6.getDuration("1.runde").get());
     assertEquals(Duration.ofSeconds(22 * 60 + 58), p6.getDuration("2.runde").get());
     assertEquals(Duration.ofSeconds(34 * 60 + 23), p6.getDuration("3.runde").get());

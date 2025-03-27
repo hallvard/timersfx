@@ -37,6 +37,7 @@ import no.hal.timers.core.Participant;
 import no.hal.timers.core.Participation;
 import no.hal.timers.core.TimeProvider;
 import no.hal.timers.csv.CompetitionCsvWriter;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 /**
  * Controller for the app as a whole.
@@ -73,7 +74,7 @@ public class TimersFxAppController {
   ToggleButton editParticipantNamesButton;
 
   private final String participantNameFormat = "Løper %s";
-  private final String timingKeyFormat = "%s. runde";
+  private final String timingKeyFormat = "%s km";
 
   @FXML
   void initialize() {
@@ -272,22 +273,8 @@ public class TimersFxAppController {
       var textField = addClearableTextField(timingKey, rowIndex, columnIndex, children);
       timingKeyTextFields.add(textField);
     } else {
-      var timingKeyButton = addNode(new Button(), rowIndex, columnIndex, children);
-      copyLookAndFeel(timeButton, timingKeyButton, true);
-      timingKeyButton.setText(timingKey);
-      registerAction(timingKeyButton, new Action<Participation>() {
-        
-        @Override
-        public boolean isFor(Participation participation) {
-          return participation.getStatus() == Participation.Status.ACTIVE
-              && (! participation.hasTime(timingKey));
-        }
-        
-        @Override
-        public void doFor(Participation participation) {
-          participation.time(timeProvider.get(), timingKey);
-        }
-      });
+      var label = addNode(new Label(timingKey), rowIndex, columnIndex, children);
+      label.getStyleClass().add("header");
     }
     return columnIndex;
   }
@@ -474,23 +461,30 @@ public class TimersFxAppController {
     return node;
   }
 
-  private void copyLookAndFeel(Node source, Node target) {
-    target.setStyle(source.getStyle());
-    target.getStyleClass().addAll(source.getStyleClass());
-  }
-
   private void copyLookAndFeel(Button source, Button target,
       boolean includeScaling) {
-    copyLookAndFeel(source, target);
+    target.setStyle(source.getStyle());
+    target.getStyleClass().addAll(source.getStyleClass());
     target.setText(source.getText());
     if (source.getGraphic() instanceof ImageView) {
       ImageView sourceImageView = (ImageView) source.getGraphic();
-      ImageView targeImageView = new ImageView(sourceImageView.getImage());
-      target.setGraphic(targeImageView);
+      ImageView targetImageView = new ImageView(sourceImageView.getImage());
       if (includeScaling) {
-        targeImageView.setScaleX(sourceImageView.getScaleX());
-        targeImageView.setScaleY(sourceImageView.getScaleY());
+        targetImageView.setScaleX(sourceImageView.getScaleX());
+        targetImageView.setScaleY(sourceImageView.getScaleY());
       }
+      target.setGraphic(targetImageView);
+    } else if (source.getGraphic() instanceof FontIcon) {
+      FontIcon sourceFontIcon = (FontIcon) source.getGraphic();
+      FontIcon targetFontIcon = new FontIcon(sourceFontIcon.getIconLiteral());
+      targetFontIcon.setRotate(sourceFontIcon.getRotate());
+      targetFontIcon.setIconSize(sourceFontIcon.getIconSize());
+      targetFontIcon.setIconColor(sourceFontIcon.getIconColor());
+      if (includeScaling) {
+        targetFontIcon.setScaleX(sourceFontIcon.getScaleX());
+        targetFontIcon.setScaleY(sourceFontIcon.getScaleY());
+      }
+      target.setGraphic(targetFontIcon);
     }
   }
 
