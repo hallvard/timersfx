@@ -103,6 +103,7 @@
                                 <list>no.hal.timers.fx.TimersFxApp</list>
                             </bundlesList>
                             <reflectionList>
+                                <list>org.kordamp.ikonli.javafx.FontIcon</list>
                                 <list>no.hal.timers.fx.TimersFxAppController</list>
                             </reflectionList>
                             <releaseConfiguration>
@@ -157,7 +158,7 @@
                                 <list>no.hal.timers.fx.TimersFxApp</list>
                             </bundlesList>
                             <reflectionList>
-                                <list>javafx.fxml.FXMLLoader</list>
+                                <list>org.kordamp.ikonli.javafx.FontIcon</list>
                                 <list>no.hal.timers.fx.TimersFxAppController</list>
                                 <!--
                                 <list>javafx.scene.control.Label</list>
