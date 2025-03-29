@@ -48,6 +48,15 @@ public class TimersFxAppController {
 
   @FXML
   Label timeLabel;
+  
+  @FXML
+  String timeLabelFormat;
+
+  @FXML
+  String durationLabelFormat;
+
+  @FXML
+  String longDurationLabelFormat;
 
   @FXML
   GridPane competitionGrid;
@@ -101,29 +110,25 @@ public class TimersFxAppController {
 
   private final TimeProvider timeProvider = () -> LocalTime.now();
 
-  private String formatTime(int hour, int min, int sec, boolean ignoreZeroHour) {
-    return (ignoreZeroHour && hour == 0
-        ? String.format("%02d:%02d", min, sec)
-        : String.format("%02d:%02d:%02d", hour, min, sec));
-  }
-
-  private String formatTime(LocalTime time) {
-    return (time != null
-        ? formatTime(time.getHour(), time.getMinute(), time.getSecond(), false)
-        : "__:__:__");
-  }
-
   private String formatTime(Duration time) {
-    return (time != null
-        ? formatTime(time.toHoursPart(), time.toMinutesPart(), time.toSecondsPart(), true)
-        : "__:__");
+    if (time == null) {
+      return "__:__";
+    } else {
+      int hour = time.toHoursPart();
+      int min = time.toMinutesPart();
+      int sec = time.toSecondsPart();
+      return (hour > 0
+          ? String.format(longDurationLabelFormat, hour, min, sec)
+          : String.format(durationLabelFormat, min, sec)
+      );
+    }
   }
 
   private final Collection<Consumer<LocalTime>> timeCallbacks = new ArrayList<>();
 
   private void handleTimeChanged() {
     LocalTime time = timeProvider.get();
-    timeLabel.setText(formatTime(time));
+    timeLabel.setText(String.format(timeLabelFormat, time.getHour(), time.getMinute(), time.getSecond()));
     for (Consumer<LocalTime> timeCallback : timeCallbacks) {
       timeCallback.accept(time);
     }
