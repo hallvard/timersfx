@@ -1,4 +1,4 @@
-package no.hal.timers.csv;
+package no.hal.timers.io;
 
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;

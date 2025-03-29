@@ -36,7 +36,7 @@ import no.hal.timers.core.Competition;
 import no.hal.timers.core.Participant;
 import no.hal.timers.core.Participation;
 import no.hal.timers.core.TimeProvider;
-import no.hal.timers.csv.CompetitionCsvWriter;
+import no.hal.timers.io.CsvTarget;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 /**
@@ -497,7 +497,7 @@ public class TimersFxAppController {
 
   @FXML
   void handleCopyCsvToClipboard() {
-    var csv = new CompetitionCsvWriter().toString(competition);
+    var csv = CsvTarget.toString(competition);
     Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, csv));
   }
 }

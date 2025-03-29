@@ -1,4 +1,4 @@
-package no.hal.timers.csv;
+package no.hal.timers.io;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
