@@ -66,6 +66,10 @@
                     <attachList>
                         <list>share</list>
                     </attachList>
+                    <!-- a native image only has the texts of the locales it is built for, and the build machine is not Norwegian -->
+                    <nativeImageArgs>
+                        <list>-H:IncludeLocales=en,nb,nn,no</list>
+                    </nativeImageArgs>
                     <bundlesList>
                         <list>no.hal.timers.fx.TimersFxApp</list>
                     </bundlesList>

@@ -22,10 +22,22 @@
     <String fx:id="timeLabelFormat" fx:value="%02d:%02d:%02d"/>
     <String fx:id="durationLabelFormat" fx:value="%02d:%02d"/>
     <String fx:id="longDurationLabelFormat" fx:value="%02d:%02d:%02d"/>
+    <!-- the look of the buttons for the last timing key, which finishes -->
+    <Button fx:id="finishButton" styleClass="header">
+      <graphic>
+        <FontIcon iconLiteral="mdi2f-flag-checkered:18" scaleX="1.2" scaleY="1.2"/>
+      </graphic>
+    </Button>
   </fx:define>
   <top>
     <StackPane>
       <HBox fx:id="topLine" styleClass="spacer">
+        <!-- a new, empty table: asks first -->
+        <Button fx:id="resetButton" onAction="#handleReset">
+          <graphic>
+            <FontIcon iconLiteral="mdi2f-file-plus-outline:24"/>
+          </graphic>
+        </Button>
         <Label text="%timeLabel.text" styleClass="header"/>
         <Label fx:id="timeLabel" text="__:__:__" styleClass="header"/>
         <Button onAction="#handleCopyCsvToClipboard">
@@ -39,9 +51,9 @@
           </graphic>
         </Button>
         <Region HBox.hgrow="ALWAYS"/>
-        <Button fx:id="stopResetButton" onAction="#handleStopReset">
+        <Button fx:id="stopButton" onAction="#handleStop">
           <graphic>
-            <FontIcon iconLiteral="mdi2s-stop:24:red"/>
+            <FontIcon iconLiteral="mdi2s-stop:24:black"/>
           </graphic>
         </Button>
       </HBox>

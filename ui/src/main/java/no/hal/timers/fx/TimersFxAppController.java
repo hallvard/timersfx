@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ResourceBundle;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javafx.animation.KeyFrame;
@@ -78,6 +79,10 @@ public class TimersFxAppController {
   @FXML
   Button timeButton;
 
+  /** Not shown, but used as the look of the buttons for the last timing key, which finishes. */
+  @FXML
+  Button finishButton;
+
   @FXML
   Node timingKeysControls;
 
@@ -87,11 +92,19 @@ public class TimersFxAppController {
   @FXML
   ToggleButton editParticipantNamesButton;
 
-  private final String participantNameFormat = "Løper %s";
-  private final String timingKeyFormat = "%s km";
+  /** The texts, from the resource bundle of the FXML: the default names, and the empty time. */
+  @FXML
+  ResourceBundle resources;
+
+  private String participantNameFormat;
+  private String timingKeyFormat;
+  private String emptyTimeLabel;
 
   @FXML
   void initialize() {
+    participantNameFormat = resources.getString("participantNameFormat");
+    timingKeyFormat = resources.getString("timingKeyFormat");
+    emptyTimeLabel = resources.getString("emptyTimeLabel");
     if (timeLabel != null) {
       var timeline = new Timeline();
       timeline.setCycleCount(Timeline.INDEFINITE);
@@ -108,7 +121,7 @@ public class TimersFxAppController {
     for (var i = 0; i < timingKeys.length - 1; i++) {
       timingKeys[i] = String.format(timingKeyFormat, i + 1);
     }
-    timingKeys[timingKeys.length - 1] = "Mål";
+    timingKeys[timingKeys.length - 1] = resources.getString("finishLabel");
     competition.setTimingKeys(timingKeys);
     for (var i = 0; i < 5; i++) {
       competition.addParticipant(new Participant(String.format(participantNameFormat, i + 1)));
@@ -121,7 +134,7 @@ public class TimersFxAppController {
 
   private String formatTime(Duration time) {
     if (time == null) {
-      return "__:__";
+      return emptyTimeLabel;
     } else {
       int hour = time.toHoursPart();
       int min = time.toMinutesPart();
@@ -274,15 +287,11 @@ public class TimersFxAppController {
     }
     addEditingSpace();
     handleParticipationActionButtonsEnablement();
-    updateStopResetButton();
+    updateStopResetButtons();
   }
 
   private boolean isFinishKey(int timingKeyIndex) {
     return timingKeyIndex == competition.getTimingKeys().size() - 1;
-  }
-
-  private FontIcon createFinishIcon() {
-    return new FontIcon("mdi2f-flag-checkered:18");
   }
 
   /**
@@ -331,10 +340,8 @@ public class TimersFxAppController {
       copyLookAndFeel(timeButton, button, false);
       button.setText(timingKey);
       if (isFinishKey(timingKeyIndex)) {
-        var icon = createFinishIcon();
-        icon.setScaleX(1.2);
-        icon.setScaleY(1.2);
-        button.setGraphic(icon);
+        copyLookAndFeel(finishButton, button, true);
+        button.setText(timingKey);
       }
       registerAction(button, createTimingAction(timingKeyIndex));
     }
@@ -360,7 +367,8 @@ public class TimersFxAppController {
       copyLookAndFeel(timeButton, timeParticipationButton, false);
       timeParticipationButton.setText("");
       if (isFinishKey(timingKeyIndex)) {
-        timeParticipationButton.setGraphic(createFinishIcon());
+        copyLookAndFeel(finishButton, timeParticipationButton, false);
+        timeParticipationButton.setText("");
       }
       var action = createTimingAction(timingKeyIndex);
       timeParticipationButton.setOnAction(event -> {
@@ -624,7 +632,10 @@ public class TimersFxAppController {
   }
 
   @FXML
-  Button stopResetButton;
+  Button stopButton;
+
+  @FXML
+  Button resetButton;
 
   @FXML
   Node topLine;
@@ -632,45 +643,43 @@ public class TimersFxAppController {
   @FXML
   Node resetConfirmBox;
 
-  private boolean stopMode = false;
-
-  /**
-   * The button is stop as long as a participant is active, then it is reset, and disabled when nothing is started.
-   * It is made again when the grid is, and that also ends a question about resetting.
-   */
-  private void updateStopResetButton() {
-    if (stopResetButton == null) {
-      return;
-    }
-    stopMode = competition.stream().anyMatch(p -> p.getStatus() == Participation.Status.ACTIVE);
-    var started = competition.stream().anyMatch(p -> p.getStatus() != Participation.Status.START);
-    stopResetButton.setGraphic(new FontIcon(stopMode ? "mdi2s-stop:24:red" : "mdi2r-restart:24"));
-    stopResetButton.setDisable(! started);
-    topLine.setVisible(true);
-    topLine.setManaged(true);
-    resetConfirmBox.setVisible(false);
-    resetConfirmBox.setManaged(false);
+  private static void setShown(Node node, boolean shown) {
+    node.setVisible(shown);
+    node.setManaged(shown);
   }
 
-  /** Stops all that are active, or asks whether to reset when nobody is. */
-  @FXML
-  void handleStopReset() {
-    if (stopMode) {
-      var time = timeProvider.get();
-      for (var participation : competition) {
-        if (participation.getStatus() == Participation.Status.ACTIVE) {
-          participation.stop(time);
-        }
-      }
-      updateGrid();
-      clearSelection();
-    } else {
-      // asked in the window instead of the top line, not as a dialog, which does not work well in the native app
-      topLine.setVisible(false);
-      topLine.setManaged(false);
-      resetConfirmBox.setVisible(true);
-      resetConfirmBox.setManaged(true);
+  /**
+   * Stop is enabled as long as a participant is active. Reset is always enabled.
+   * It is made again when the grid is, and that also ends a question about resetting.
+   */
+  private void updateStopResetButtons() {
+    if (stopButton == null) {
+      return;
     }
+    var stopMode = competition.stream().anyMatch(p -> p.getStatus() == Participation.Status.ACTIVE);
+    stopButton.setDisable(! stopMode);
+    setShown(topLine, true);
+    setShown(resetConfirmBox, false);
+  }
+
+  /** Stops all that are active. */
+  @FXML
+  void handleStop() {
+    var time = timeProvider.get();
+    for (var participation : competition) {
+      if (participation.getStatus() == Participation.Status.ACTIVE) {
+        participation.stop(time);
+      }
+    }
+    updateGrid();
+    clearSelection();
+  }
+
+  /** Asks whether to reset, in the window instead of the top line, not as a dialog, which does not work well in the native app. */
+  @FXML
+  void handleReset() {
+    setShown(topLine, false);
+    setShown(resetConfirmBox, true);
   }
 
   @FXML
@@ -682,6 +691,6 @@ public class TimersFxAppController {
 
   @FXML
   void handleCancelReset() {
-    updateStopResetButton();
+    updateStopResetButtons();
   }
 }
