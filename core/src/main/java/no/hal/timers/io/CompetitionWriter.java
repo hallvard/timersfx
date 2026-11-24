@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 import no.hal.timers.core.Competition;
 
 /**
@@ -29,14 +28,18 @@ public class CompetitionWriter {
   public void writeCompetition(Competition comp, Target target) {
     Map<String, String> headers = new LinkedHashMap<>();
     headers.put(participantKey, participantKey);
-    headers.putAll(comp.getTimingKeys().stream().collect(Collectors.toMap(key -> key, key -> key)));
+    var timingKeys = comp.getTimingKeys();
+    for (var timingKey : timingKeys) {
+      headers.put(timingKey, timingKey);
+    }
     target.acceptHeaders(headers);
     for (var participation : comp) {
       Map<String, String> row = new LinkedHashMap<>();
       row.put(participantKey, participation.getParticipant().getName());
-      for (var timingKey : comp.getTimingKeys()) {
-        var duration = participation.getDuration(timingKey);
-        row.put(timingKey, duration.map(this::formatDuration).orElse(""));
+      // the last timing key is the finish, which is recorded under FINISH whatever it is named
+      for (var i = 0; i < timingKeys.size(); i++) {
+        var duration = participation.getDuration(comp.getTimeKey(i));
+        row.put(timingKeys.get(i), duration.map(this::formatDuration).orElse(""));
       }
       target.acceptRow(row);
     }

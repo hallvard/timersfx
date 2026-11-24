@@ -114,6 +114,24 @@ public record Participation(Participant participant, Timings<String, LocalTime> 
   }
 
   /**
+   * Removes the start time and all the timings, so the participation is back in the START status.
+   */
+  public void reset() {
+    timings.clear();
+  }
+
+  /**
+   * Gets the duration from the start to the end of the participation, i.e. the time of finish or,
+   * if the participation was stopped instead, the time of stop.
+   *
+   * @return the duration, or empty if the participation has not ended
+   */
+  public Optional<Duration> getEndDuration() {
+    var finish = getDuration(Status.FINISH.name());
+    return finish.isPresent() ? finish : getDuration(Status.STOP.name());
+  }
+
+  /**
    * Gets the status of the participation,
    * based on recorded timings.
    *

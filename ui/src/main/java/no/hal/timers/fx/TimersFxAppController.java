@@ -99,6 +99,10 @@ public class TimersFxAppController {
           .add(new KeyFrame(javafx.util.Duration.seconds(1), event -> handleTimeChanged()));
       timeline.playFromStart();
     }
+    if (shareResultsButton != null && TimersFxApp.getResultsSharer() != null) {
+      shareResultsButton.setVisible(true);
+      shareResultsButton.setManaged(true);
+    }
     competition = new Competition();
     String[] timingKeys = new String[4];
     for (var i = 0; i < timingKeys.length - 1; i++) {
@@ -187,15 +191,11 @@ public class TimersFxAppController {
   private final Map<Action<Participation>, Button> participationActions = new HashMap<>();
 
   private void handleParticipationActionButtonsEnablement() {
-    for (var action : participationActions.keySet()) {
-      var disabled = selection.isEmpty();
-      for (var participation : selection) {
-        if (! action.isFor(participation)) {
-          disabled = true;
-          break;
-        }
-      }
-      participationActions.get(action).setDisable(disabled);
+    for (var entry : participationActions.entrySet()) {
+      var action = entry.getKey();
+      // enabled when the action applies to at least one of the selected, and is then done for those it applies to
+      var disabled = selection.stream().noneMatch(action::isFor);
+      entry.getValue().setDisable(disabled);
     }
   }
 
@@ -222,6 +222,8 @@ public class TimersFxAppController {
     columnConstraints.clear();
 
     timeCallbacks.clear();
+    participationActions.clear();
+    selectParticipationButtons.clear();
 
     // add headers
     var rowIndex = 0;
@@ -242,8 +244,8 @@ public class TimersFxAppController {
         Priority.NEVER, HPos.CENTER, false));
 
     var timingKeys = competition.getTimingKeys();
-    for (var timingKey : timingKeys) {
-      addTimingKeyColumnHeader(timingKey, rowIndex, columnIndex++, children);
+    for (var i = 0; i < timingKeys.size(); i++) {
+      addTimingKeyColumnHeader(i, rowIndex, columnIndex++, children);
       columnConstraints.add(new ColumnConstraints(60,
           Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE,
           Priority.SOMETIMES, HPos.CENTER, false));
@@ -260,13 +262,9 @@ public class TimersFxAppController {
       addParticipantStartCell(participation, rowIndex, columnIndex++, children);
 
       var last = Duration.ZERO;
-      var timingKeysIt = timingKeys.iterator();
-      while (timingKeysIt.hasNext()) {
-        var timingKey = timingKeysIt.next();
-        boolean isLast = timingKeysIt.hasNext();
-        addParticipantTimingCell(participation, timingKey, rowIndex, columnIndex++,
-            last, isLast, children);
-        var durationOpt = participation.getDuration(timingKey);
+      for (var i = 0; i < timingKeys.size(); i++) {
+        addParticipantTimingCell(participation, i, rowIndex, columnIndex++, last, children);
+        var durationOpt = participation.getDuration(competition.getTimeKey(i));
         if (durationOpt.isPresent()) {
           last = durationOpt.get();
         }
@@ -275,38 +273,99 @@ public class TimersFxAppController {
       columnIndex = 0;
     }
     addEditingSpace();
+    handleParticipationActionButtonsEnablement();
+    updateStopResetButton();
   }
 
-  private int addTimingKeyColumnHeader(String timingKey,
+  private boolean isFinishKey(int timingKeyIndex) {
+    return timingKeyIndex == competition.getTimingKeys().size() - 1;
+  }
+
+  private FontIcon createFinishIcon() {
+    return new FontIcon("mdi2f-flag-checkered:18");
+  }
+
+  /**
+   * The action of a timing key. For the last one it is finishing, whatever the key is named, and it is recorded as FINISH.
+   * For the others it is timing the key. Both are for participants that are active, so not for those that finished or stopped.
+   */
+  private Action<Participation> createTimingAction(int timingKeyIndex) {
+    var timeKey = competition.getTimeKey(timingKeyIndex);
+    if (isFinishKey(timingKeyIndex)) {
+      return new Action<Participation>() {
+        @Override
+        public boolean isFor(Participation participation) {
+          return participation.getStatus() == Participation.Status.ACTIVE;
+        }
+
+        @Override
+        public void doFor(Participation participation) {
+          participation.finish(timeProvider.get());
+        }
+      };
+    }
+    return new Action<Participation>() {
+      @Override
+      public boolean isFor(Participation participation) {
+        return participation.getStatus() == Participation.Status.ACTIVE
+            && (! participation.hasTime(timeKey));
+      }
+
+      @Override
+      public void doFor(Participation participation) {
+        participation.time(timeProvider.get(), timeKey);
+      }
+    };
+  }
+
+  private int addTimingKeyColumnHeader(int timingKeyIndex,
       int rowIndex, int columnIndex,
       ObservableList<Node> children) {
+    var timingKey = competition.getTimingKeys().get(timingKeyIndex);
     if (timingKeyTextFields != null) {
       var textField = addClearableTextField(timingKey, rowIndex, columnIndex, children);
       timingKeyTextFields.add(textField);
     } else {
-      var label = addNode(new Label(timingKey), rowIndex, columnIndex, children);
-      label.getStyleClass().add("header");
+      // tapping the name of the timing key times (or finishes) all the selected participants that are active and don't have the time yet
+      var button = addNode(new Button(), rowIndex, columnIndex, children);
+      copyLookAndFeel(timeButton, button, false);
+      button.setText(timingKey);
+      if (isFinishKey(timingKeyIndex)) {
+        var icon = createFinishIcon();
+        icon.setScaleX(1.2);
+        icon.setScaleY(1.2);
+        button.setGraphic(icon);
+      }
+      registerAction(button, createTimingAction(timingKeyIndex));
     }
     return columnIndex;
   }
 
   private Optional<Duration> addParticipantTimingCell(Participation participation,
-      String timingKey, int rowIndex,
-      int columnIndex, Duration lastDuration, boolean isLast,
+      int timingKeyIndex, int rowIndex,
+      int columnIndex, Duration lastDuration,
       ObservableList<Node> children) {
-    var durationOpt = participation.getDuration(timingKey);
+    var timeKey = competition.getTimeKey(timingKeyIndex);
+    var durationOpt = participation.getDuration(timeKey);
     if (durationOpt.isPresent()) {
       var duration = durationOpt.get();
-      var labelDuration = (isLast ? duration.minus(lastDuration) : duration);
+      // the laps show the time since the previous one, the finish shows the total time
+      var labelDuration = (isFinishKey(timingKeyIndex) ? duration : duration.minus(lastDuration));
       addNode(new Label(formatTime(labelDuration)), rowIndex, columnIndex, children);
+    } else if (participation.getStatus() == Participation.Status.STOP
+        || participation.getStatus() == Participation.Status.FINISH) {
+      // stopped, or finished without this lap (which is up to the participant), so there is nothing more to time
     } else {
       var timeParticipationButton = addNode(new Button(), rowIndex, columnIndex, children);
       copyLookAndFeel(timeButton, timeParticipationButton, false);
       timeParticipationButton.setText("");
+      if (isFinishKey(timingKeyIndex)) {
+        timeParticipationButton.setGraphic(createFinishIcon());
+      }
+      var action = createTimingAction(timingKeyIndex);
       timeParticipationButton.setOnAction(event -> {
-        if (participation.getStatus() == Participation.Status.ACTIVE
-            && (! participation.hasTime(timingKey))) {
-          participation.time(timeProvider.get(), timingKey);
+        if (action.isFor(participation)) {
+          action.doFor(participation);
           updateGrid();
         }
       });
@@ -318,9 +377,12 @@ public class TimersFxAppController {
       int rowIndex, int columnIndex,
       ObservableList<Node> children) {
     if (participation.getStartTime().isPresent()) {
-      var durationLabel = addNode(new Label(formatDuration(participation)),
-          rowIndex, columnIndex, children);
-      timeCallbacks.add(time -> durationLabel.setText(formatDuration(participation)));
+      // the time only runs while the participant is active, and the total is with the finish
+      if (participation.getEndDuration().isEmpty()) {
+        var durationLabel = addNode(new Label(formatDuration(participation)),
+            rowIndex, columnIndex, children);
+        timeCallbacks.add(time -> durationLabel.setText(formatDuration(participation)));
+      }
     } else {
       var startParticipationButton = addNode(new Button(), rowIndex, columnIndex, children);
       copyLookAndFeel(startButton, startParticipationButton, false);
@@ -344,6 +406,7 @@ public class TimersFxAppController {
       int rowIndex, int columnIndex,
       ObservableList<Node> children) {
     var selectButton = addNode(new CheckBox(), rowIndex, columnIndex, children);
+    selectButton.setSelected(isSelected(participation));
     selectButton.setOnAction(event -> {
       setSelected(participation, selectButton.isSelected());
       selectAllButton.setSelected(false);
@@ -539,18 +602,86 @@ public class TimersFxAppController {
         : Collections.emptyList());
   }
 
-  /**
-   * Gets the results (CSV) out of the app. The system clipboard doesn't work in the native Android app, so there the mobile module
-   * sets a way to share the text with other apps instead, see {@link TimersFxApp#setResultsSharer}.
-   */
+  @FXML
+  Button shareResultsButton;
+
+  /** Copies the results (CSV) to the system clipboard. */
   @FXML
   void handleCopyCsvToClipboard() {
-    var csv = CsvTarget.toString(competition);
+    Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, CsvTarget.toString(competition)));
+  }
+
+  /**
+   * Shares the results (CSV) with other apps. Only on the phone, where the mobile module sets how, see
+   * {@link TimersFxApp#setResultsSharer}.
+   */
+  @FXML
+  void handleShareResults() {
     var sharer = TimersFxApp.getResultsSharer();
     if (sharer != null) {
-      sharer.accept(csv);
-    } else {
-      Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, csv));
+      sharer.accept(CsvTarget.toString(competition));
     }
+  }
+
+  @FXML
+  Button stopResetButton;
+
+  @FXML
+  Node topLine;
+
+  @FXML
+  Node resetConfirmBox;
+
+  private boolean stopMode = false;
+
+  /**
+   * The button is stop as long as a participant is active, then it is reset, and disabled when nothing is started.
+   * It is made again when the grid is, and that also ends a question about resetting.
+   */
+  private void updateStopResetButton() {
+    if (stopResetButton == null) {
+      return;
+    }
+    stopMode = competition.stream().anyMatch(p -> p.getStatus() == Participation.Status.ACTIVE);
+    var started = competition.stream().anyMatch(p -> p.getStatus() != Participation.Status.START);
+    stopResetButton.setGraphic(new FontIcon(stopMode ? "mdi2s-stop:24:red" : "mdi2r-restart:24"));
+    stopResetButton.setDisable(! started);
+    topLine.setVisible(true);
+    topLine.setManaged(true);
+    resetConfirmBox.setVisible(false);
+    resetConfirmBox.setManaged(false);
+  }
+
+  /** Stops all that are active, or asks whether to reset when nobody is. */
+  @FXML
+  void handleStopReset() {
+    if (stopMode) {
+      var time = timeProvider.get();
+      for (var participation : competition) {
+        if (participation.getStatus() == Participation.Status.ACTIVE) {
+          participation.stop(time);
+        }
+      }
+      updateGrid();
+      clearSelection();
+    } else {
+      // asked in the window instead of the top line, not as a dialog, which does not work well in the native app
+      topLine.setVisible(false);
+      topLine.setManaged(false);
+      resetConfirmBox.setVisible(true);
+      resetConfirmBox.setManaged(true);
+    }
+  }
+
+  @FXML
+  void handleConfirmReset() {
+    competition.reset();
+    updateGrid();
+    clearSelection();
+  }
+
+  @FXML
+  void handleCancelReset() {
+    updateStopResetButton();
   }
 }

@@ -11,6 +11,8 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <!-- 
 <?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
  -->
@@ -22,15 +24,43 @@
     <String fx:id="longDurationLabelFormat" fx:value="%02d:%02d:%02d"/>
   </fx:define>
   <top>
-    <HBox styleClass="spacer">
-      <Label text="%timeLabel.text" styleClass="header"/>
-      <Label fx:id="timeLabel" text="__:__:__" styleClass="header"/>
-      <Button onAction="#handleCopyCsvToClipboard">
-        <graphic>
-          <FontIcon iconLiteral="mdi2c-content-copy:24"/>
-        </graphic>
-      </Button>
-    </HBox>
+    <StackPane>
+      <HBox fx:id="topLine" styleClass="spacer">
+        <Label text="%timeLabel.text" styleClass="header"/>
+        <Label fx:id="timeLabel" text="__:__:__" styleClass="header"/>
+        <Button onAction="#handleCopyCsvToClipboard">
+          <graphic>
+            <FontIcon iconLiteral="mdi2c-content-copy:24"/>
+          </graphic>
+        </Button>
+        <Button fx:id="shareResultsButton" onAction="#handleShareResults" visible="false" managed="false">
+          <graphic>
+            <FontIcon iconLiteral="mdi2s-share-variant:24"/>
+          </graphic>
+        </Button>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="stopResetButton" onAction="#handleStopReset">
+          <graphic>
+            <FontIcon iconLiteral="mdi2s-stop:24:red"/>
+          </graphic>
+        </Button>
+      </HBox>
+      <!-- replaces the whole top line while asking whether to reset -->
+      <HBox fx:id="resetConfirmBox" visible="false" managed="false" styleClass="spacer">
+        <Label text="%resetConfirmLabel.text" styleClass="header"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button onAction="#handleConfirmReset">
+          <graphic>
+            <FontIcon iconLiteral="mdi2c-check:24:green"/>
+          </graphic>
+        </Button>
+        <Button onAction="#handleCancelReset">
+          <graphic>
+            <FontIcon iconLiteral="mdi2c-close:24:red"/>
+          </graphic>
+        </Button>
+      </HBox>
+    </StackPane>
   </top>
   <center>
     <ScrollPane fx:id="scrollPane" vbarPolicy="AS_NEEDED" fitToHeight="false" hbarPolicy="AS_NEEDED" fitToWidth="true">

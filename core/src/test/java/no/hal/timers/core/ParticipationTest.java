@@ -1,6 +1,8 @@
 package no.hal.timers.core;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalTime;
 import no.hal.timers.core.Participation.Status;
@@ -49,5 +51,17 @@ public class ParticipationTest {
     participation.start(LocalTime.now());
     participation.stop(LocalTime.now());
     assertSame(Status.STOP, participation.getStatus());
+  }
+
+  @Test
+  public void testEndDurationAndReset() {
+    var start = LocalTime.of(10, 0, 0);
+    participation.start(start);
+    assertTrue(participation.getEndDuration().isEmpty());
+    participation.stop(start.plusMinutes(3));
+    assertEquals(java.time.Duration.ofMinutes(3), participation.getEndDuration().get());
+    participation.reset();
+    assertSame(Status.START, participation.getStatus());
+    assertTrue(participation.getEndDuration().isEmpty());
   }
 }

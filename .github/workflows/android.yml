@@ -1,4 +1,4 @@
-name: "Android, changed 2026-11-24T21:26"
+name: "Android, changed 2026-11-24T22:45"
 
 # Builds the native Android app (an apk) with Gluon, which can only be done on Linux. It takes a while, so it is only started when this file is
 # changed and pushed to master, or by hand (Actions, Android, Run workflow, or gh workflow run android.yml), and the apk is a file of the run. 
@@ -132,11 +132,7 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           STATUS: ${{ job.status }}
         run: |
-          if [ -z "$NTFY_TOPIC" ]; then
-            echo "::warning::NTFY_TOPIC is not set in the secrets of this repository, so no notification is sent."
-            exit 0
-          fi
-          echo "The topic is ${#NTFY_TOPIC} characters long."
+          [ -n "$NTFY_TOPIC" ] || exit 0
           repo_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
           if [ "$STATUS" = "success" ]; then
             title="timersfx build ${{ github.run_number }} is ready"
@@ -150,6 +146,4 @@ jobs:
             tags="x"
           fi
           message=$(printf '%s\n%s %s' "$text" "${GITHUB_SHA::7}" "$(git log -1 --format=%s 2>/dev/null)")
-          code=$(curl -sS -o "$RUNNER_TEMP/ntfy.out" -w '%{http_code}' -H "Title: $title" -H "Click: $link" -H "Tags: $tags" -d "$message" "https://ntfy.sh/$NTFY_TOPIC") || code="curl failed"
-          echo "ntfy.sh answered: $code"
-          [ "$code" = "200" ] || cat "$RUNNER_TEMP/ntfy.out" 2>/dev/null || true
+          curl -sS -H "Title: $title" -H "Click: $link" -H "Tags: $tags" -d "$message" "https://ntfy.sh/$NTFY_TOPIC" || true

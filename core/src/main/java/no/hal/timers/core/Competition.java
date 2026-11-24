@@ -35,6 +35,10 @@ public class Competition implements Iterable<Participation> {
     return participations.iterator();
   }
 
+  public java.util.stream.Stream<Participation> stream() {
+    return participations.stream();
+  }
+
   public int getParticipationCount() {
     return participations.size();
   }
@@ -59,6 +63,34 @@ public class Competition implements Iterable<Participation> {
     return participations.stream()
         .filter(participation -> participation.isFor(participant))
         .findFirst();
+  }
+
+  /**
+   * Gets the key the time of a timing key (a column) is recorded under. The last timing key is the finish,
+   * whatever it is named, so its time is recorded as {@link Participation.Status#FINISH}.
+   * The other timing keys are used as they are.
+   *
+   * @param index the position of the timing key
+   * @return the key to record the time under
+   */
+  public String getTimeKey(int index) {
+    return index == timingKeys.size() - 1 ? Participation.Status.FINISH.name() : timingKeys.get(index);
+  }
+
+  /**
+   * Gets the keys the times of the timing keys are recorded under, see {@link #getTimeKey(int)}.
+   *
+   * @return the keys, one for each timing key
+   */
+  public List<String> getTimeKeys() {
+    return java.util.stream.IntStream.range(0, timingKeys.size()).mapToObj(this::getTimeKey).toList();
+  }
+
+  /**
+   * Removes all start times and timings of all the participations. The participants and timing keys are kept.
+   */
+  public void reset() {
+    participations.forEach(Participation::reset);
   }
 
   public void setTimingKeys(String... keys) {
