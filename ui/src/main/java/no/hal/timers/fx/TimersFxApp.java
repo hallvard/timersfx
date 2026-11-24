@@ -2,6 +2,7 @@ package no.hal.timers.fx;
 
 import java.io.IOException;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -12,6 +13,17 @@ import javafx.stage.Stage;
  * The main class for the TimersFX application.
  */
 public class TimersFxApp extends Application {
+
+  private static Consumer<String> resultsSharer;
+
+  /** Sets how the results (CSV text) are got out of the app, instead of copying them to the clipboard. */
+  public static void setResultsSharer(Consumer<String> sharer) {
+    resultsSharer = sharer;
+  }
+
+  static Consumer<String> getResultsSharer() {
+    return resultsSharer;
+  }
 
   @Override
   public void start(Stage primaryStage) throws Exception {

@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.HPos;
@@ -21,6 +22,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.ImageView;
@@ -57,6 +59,9 @@ public class TimersFxAppController {
 
   @FXML
   String longDurationLabelFormat;
+
+  @FXML
+  ScrollPane scrollPane;
 
   @FXML
   GridPane competitionGrid;
@@ -269,6 +274,7 @@ public class TimersFxAppController {
       rowIndex++;
       columnIndex = 0;
     }
+    addEditingSpace();
   }
 
   private int addTimingKeyColumnHeader(String timingKey,
@@ -455,7 +461,40 @@ public class TimersFxAppController {
     clearButton.setOnAction(event -> textField.clear());
     HBox box = addNode(new HBox(textField, clearButton), rowIndex, columnIndex, children);
     box.setAlignment(Pos.CENTER);
+    // the on-screen keyboard may cover the line, so it is scrolled to the top of the view
+    textField.focusedProperty().addListener((prop, wasFocused, isFocused) -> {
+      if (isFocused) {
+        Platform.runLater(() -> scrollToTop(box));
+      }
+    });
     return textField;
+  }
+
+  private void scrollToTop(Node node) {
+    var content = scrollPane.getContent();
+    content.applyCss();
+    scrollPane.layout();
+    double range = content.getLayoutBounds().getHeight() - scrollPane.getViewportBounds().getHeight();
+    if (range > 0) {
+      double y = node.localToScene(node.getBoundsInLocal()).getMinY()
+          - content.localToScene(content.getBoundsInLocal()).getMinY();
+      scrollPane.setVvalue(Math.clamp(y / range, 0.0, 1.0));
+    }
+  }
+
+  /**
+   * While editing, space as high as the view is added below the grid, so that a line near the end can still be scrolled to the top.
+   */
+  private void addEditingSpace() {
+    if (participantTextFields != null || timingKeyTextFields != null) {
+      var lastRow = competitionGrid.getChildren().stream()
+          .mapToInt(node -> GridPane.getRowIndex(node) != null ? GridPane.getRowIndex(node) : 0)
+          .max().orElse(0);
+      var space = new Region();
+      space.setPrefHeight(Math.max(scrollPane.getViewportBounds().getHeight(), 300.0));
+      GridPane.setConstraints(space, 0, lastRow + 1, 2, 1);
+      competitionGrid.getChildren().add(space);
+    }
   }
 
   private <T extends Node> T addNode(T node, int rowIndex, int columnIndex,
@@ -500,9 +539,18 @@ public class TimersFxAppController {
         : Collections.emptyList());
   }
 
+  /**
+   * Gets the results (CSV) out of the app. The system clipboard doesn't work in the native Android app, so there the mobile module
+   * sets a way to share the text with other apps instead, see {@link TimersFxApp#setResultsSharer}.
+   */
   @FXML
   void handleCopyCsvToClipboard() {
     var csv = CsvTarget.toString(competition);
-    Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, csv));
+    var sharer = TimersFxApp.getResultsSharer();
+    if (sharer != null) {
+      sharer.accept(csv);
+    } else {
+      Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, csv));
+    }
   }
 }

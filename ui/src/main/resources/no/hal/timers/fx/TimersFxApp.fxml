@@ -33,7 +33,7 @@
     </HBox>
   </top>
   <center>
-    <ScrollPane vbarPolicy="AS_NEEDED" fitToHeight="false" hbarPolicy="AS_NEEDED" fitToWidth="true">
+    <ScrollPane fx:id="scrollPane" vbarPolicy="AS_NEEDED" fitToHeight="false" hbarPolicy="AS_NEEDED" fitToWidth="true">
       <GridPane fx:id="competitionGrid" styleClass="container"> <!-- hgap="10" vgap="5" -->
         <HBox fx:id="participantColumnHeader" styleClass="spacer">
           <Label text="%participantLabel.text" styleClass="header"/>

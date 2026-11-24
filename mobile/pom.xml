@@ -21,6 +21,8 @@
         <gluonfx-maven-plugin.version>1.0.25</gluonfx-maven-plugin.version>
         <mainClassName>no.hal.timers.mobile.MobileApp</mainClassName>
         <gluonfx.target>host</gluonfx.target>
+        <!-- Attach gives access to the phone: share, to send the results to another app, since the clipboard doesn't work in the native app -->
+        <attach.version>4.0.22</attach.version>
         <!-- the workflow sets the version code to the number of the run, so each build can be installed over the one before -->
         <android.versionCode>1</android.versionCode>
         <android.versionName>1.0</android.versionName>
@@ -34,6 +36,11 @@
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.gluonhq.attach</groupId>
+            <artifactId>share</artifactId>
+            <version>${attach.version}</version>
         </dependency>
     </dependencies>
 
@@ -56,6 +63,9 @@
                     <mainClass>${mainClassName}</mainClass>
                     <target>${gluonfx.target}</target>
                     <appIdentifier>no.hal.timersfx</appIdentifier>
+                    <attachList>
+                        <list>share</list>
+                    </attachList>
                     <bundlesList>
                         <list>no.hal.timers.fx.TimersFxApp</list>
                     </bundlesList>
