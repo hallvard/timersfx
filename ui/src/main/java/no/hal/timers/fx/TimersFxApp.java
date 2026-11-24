@@ -25,6 +25,7 @@ public class TimersFxApp extends Application {
    * @param fullScreen whether the window is the whole screen, as on a phone
    */
   public static void show(Stage stage, boolean fullScreen) throws IOException {
+    IconFonts.load();
     Parent parent = FXMLLoader.load(TimersFxApp.class.getResource("TimersFxApp.fxml"),
         ResourceBundle.getBundle("no.hal.timers.fx.TimersFxApp"));
     if (!fullScreen) {
