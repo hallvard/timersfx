@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>no.hal</groupId>
+        <artifactId>timersfx-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>timersfx-mobile</artifactId>
+    <name>TimersFx as a native app</name>
+    <description>The user interface as a native app, with Gluon (GraalVM native image): on Android, and on the desktop to try it. Built with the mobile profile, which sets the versions of Java and JavaFX that Gluon supports.</description>
+
+    <properties>
+        <!--
+          Plugin 1.0.25 uses Substrate 0.0.65, which is what the newest GraalVM that Gluon publishes (23+25.1-dev, 2024-09-08) is for.
+          Substrate 0.0.66 and later (plugins 1.0.26 to 1.0.29) pass the option ForceNoROSectionRelocations to the Android build,
+          which that GraalVM doesn't have: "Could not find option 'ForceNoROSectionRelocations'".
+        -->
+        <gluonfx-maven-plugin.version>1.0.25</gluonfx-maven-plugin.version>
+        <mainClassName>no.hal.timers.mobile.MobileApp</mainClassName>
+        <gluonfx.target>host</gluonfx.target>
+        <!-- the workflow sets the version code to the number of the run, so each build can be installed over the one before -->
+        <android.versionCode>1</android.versionCode>
+        <android.versionName>1.0</android.versionName>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>no.hal</groupId>
+            <artifactId>timersfx-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- gluonfx:run runs the app on a JVM through this plugin, and reads the main class from it -->
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <mainClass>${mainClassName}</mainClass>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.gluonhq</groupId>
+                <artifactId>gluonfx-maven-plugin</artifactId>
+                <version>${gluonfx-maven-plugin.version}</version>
+                <configuration>
+                    <mainClass>${mainClassName}</mainClass>
+                    <target>${gluonfx.target}</target>
+                    <appIdentifier>no.hal.timersfx</appIdentifier>
+                    <bundlesList>
+                        <list>no.hal.timers.fx.TimersFxApp</list>
+                    </bundlesList>
+                    <reflectionList>
+                        <list>org.kordamp.ikonli.javafx.FontIcon</list>
+                        <list>no.hal.timers.fx.TimersFxAppController</list>
+                    </reflectionList>
+                    <releaseConfiguration>
+                        <appLabel>TimersFx</appLabel>
+                        <versionCode>${android.versionCode}</versionCode>
+                        <versionName>${android.versionName}</versionName>
+                    </releaseConfiguration>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!--
+          Signs the app with a key of our own, so that a new build can be installed over the one before. Without it, Gluon uses a debug key
+          that is made on the machine that builds, so each build has a different one, and the old app must be uninstalled first.
+          The keystore must have the file extension .keystore or .jks. The workflow sets these environment variables from secrets:
+          ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD.
+        -->
+        <profile>
+            <id>signed</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.gluonhq</groupId>
+                        <artifactId>gluonfx-maven-plugin</artifactId>
+                        <configuration>
+                            <releaseConfiguration>
+                                <providedKeyStorePath>${env.ANDROID_KEYSTORE_PATH}</providedKeyStorePath>
+                                <providedKeyStorePassword>${env.ANDROID_KEYSTORE_PASSWORD}</providedKeyStorePassword>
+                                <providedKeyAlias>${env.ANDROID_KEY_ALIAS}</providedKeyAlias>
+                                <providedKeyAliasPassword>${env.ANDROID_KEY_PASSWORD}</providedKeyAliasPassword>
+                            </releaseConfiguration>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- mvn -Pmobile -Pandroid ... gluonfx:build gluonfx:package: the native app for Android, which can only be built on Linux -->
+        <profile>
+            <id>android</id>
+            <properties>
+                <gluonfx.target>android</gluonfx.target>
+            </properties>
+        </profile>
+    </profiles>
+</project>

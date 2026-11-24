@@ -1,39 +1,63 @@
-name: Android
+name: "Android, changed 2026-11-24T20:53"
+
+# Builds the native Android app (an apk) with Gluon, which can only be done on Linux. It takes a while, so it is only started when this file is
+# changed and pushed to master, or by hand (Actions, Android, Run workflow, or gh workflow run android.yml), and the apk is a file of the run. 
+# Gluon's GraalVM needs Java 23 or newer for this code, and the app is built with the mobile profile, which sets Java 23 and JavaFX 24.
+# The Gluon plugin is documented for Maven 3.8.8 or older, so that is what is used here, not Maven 4.
+
+# The app is signed with a key of our own, kept in the secrets of the repository, so that a new build can be installed over the old one
+# on a phone. The build number is the version code, which has to rise. The apk is also the file of the release "latest", which is
+# replaced each time, so https://github.com/<owner>/<repo>/releases/download/latest/timersfx.apk is always the newest.
+# Secrets: ANDROID_KEYSTORE_BASE64 (the keystore file, base64), ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD.
+# Without them, the app is signed with a debug key, which is different for each build.
+# When the secret NTFY_TOPIC is set, the end of the build is sent as a notification through ntfy.sh (the ntfy app on the phone, subscribed to
+# the topic): tapping it opens the apk to download when the build worked, and the run when it failed, and the message has the link too.
+# The topic is the only secret of a topic on ntfy.sh, so it should be a long name that can't be guessed.
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ master ]
-
+    branches:
+      - master
+    paths:
+      - '.github/workflows/android.yml'
 jobs:
-  build:
+  apk:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-      # - uses: actions/checkout@v3
-
-      # - name: Setup Java 17
-      #   uses: actions/setup-java@v4
-      #   with:
-      #     distribution: 'temurin'
-      #     java-version: '17'
-      #     cache: 'maven'
-
-      - name: Setup Java 17 and Maven 3.8.8
+      - name: Setup Java 23 and Maven 3.8.8
         uses: s4u/setup-maven-action@v1.18.0
         with:
           java-distribution: 'temurin'
-          java-version: '17'
+          java-version: '23'
           maven-version: '3.8.8'
 
-      - name: mvn package
-        run: cd timersfx && mvn --batch-mode --update-snapshots install -Pandroid -Dci=gha
+      # The downloads are cached: the Maven repository, what Gluon downloads (the static SDKs, and the Android SDK and NDK),
+      # and Gradle. The caches are restored first, and saved last, also if the build failed, which a plain cache step doesn't do,
+      # so what was downloaded is there when a failing build is tried again. The key has the poms, so it changes with the dependencies.
+      - name: Restore the caches
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/no/hal
+            ~/.gluon
+            ~/.gradle
+          key: android-${{ hashFiles('**/pom.xml') }}
+          restore-keys: android-
+
+      - name: Build the modules the app needs
+        run: mvn --batch-mode -Pmobile -Dmaven.compiler.release=23 -pl mobile -am install -DskipTests
 
       - name: Setup Gluon's GraalVM
         uses: gluonhq/setup-graalvm@master
         with:
-          graalvm: '22.1.0.1-Final'
-          jdk: 'java17'
-          # arch: 'aarch64'
+          graalvm: '23+25.1-dev-2409082136'
+          jdk: 'java23'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install linux libraries
@@ -41,21 +65,85 @@ jobs:
           sudo apt-get update
           sudo apt install libasound2-dev libavcodec-dev libavformat-dev libavutil-dev libgl-dev libgtk-3-dev libpango1.0-dev libxtst-dev
 
-      - name: mvn gluonfx:build
+      - name: Prepare the signing key
+        id: key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/timersfx.keystore"
+            echo "profile=-Psigned" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No signing key in the secrets, so the app is signed with a debug key, and the old app must be uninstalled first."
+            echo "profile=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build the native Android app
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/timersfx.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           export ANDROID_SDK=$ANDROID_HOME
-          cd timersfx && mvn --batch-mode --update-snapshots gluonfx:build gluonfx:package -f fxui -Pandroid
+          mvn --batch-mode -Pmobile -Pandroid ${{ steps.key.outputs.profile }} -Dmaven.compiler.release=23 \
+            -Dandroid.versionCode=${{ github.run_number }} -Dandroid.versionName=1.0.${{ github.run_number }} \
+            -pl mobile gluonfx:build gluonfx:package
 
-      - name: Tree view of gluon build files
-        run: tree timersfx/fxui/target/gluonfx
+#      - name: Tree view of the Gluon build files
+#        run: tree mobile/target/gluonfx
 
-      - name: Copy packages to staging
+      - name: Name the apk
+        id: apk
         run: |
-          mkdir staging
-          cp timersfx/fxui/target/gluonfx/aarch64-android/gvm/fxui.apk staging
+          apk=$(ls mobile/target/gluonfx/aarch64-android/gvm/*.apk | head -1)
+          cp "$apk" "$RUNNER_TEMP/timersfx.apk"
+          echo "file=$RUNNER_TEMP/timersfx.apk" >> "$GITHUB_OUTPUT"
 
-      - name: Upload
+      - name: Upload the apk
         uses: actions/upload-artifact@v4
         with:
           name: apk
-          path: staging
+          path: ${{ steps.apk.outputs.file }}
+
+      # The release "latest" is made the first time, and then its file is replaced, and its text says which build it is
+      - name: Publish the apk as the release "latest"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view latest > /dev/null 2>&1 || gh release create latest --prerelease --title "Latest build" --notes "The newest build of the Android app."
+          gh release upload latest "${{ steps.apk.outputs.file }}" --clobber
+          gh release edit latest --notes "Build ${{ github.run_number }} of ${GITHUB_SHA::7}, from the run ${{ github.run_id }}."
+
+      - name: Save the caches
+        if: always() && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/no/hal
+            ~/.gluon
+            ~/.gradle
+          key: android-${{ hashFiles('**/pom.xml') }}
+
+      - name: Notify the phone
+        if: always()
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          STATUS: ${{ job.status }}
+        run: |
+          [ -n "$NTFY_TOPIC" ] || exit 0
+          repo_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          if [ "$STATUS" = "success" ]; then
+            title="timersfx build ${{ github.run_number }} is ready"
+            link="$repo_url/releases/download/latest/timersfx.apk"
+            text="Download: $link"
+            tags="white_check_mark"
+          else
+            title="timersfx build ${{ github.run_number }}: $STATUS"
+            link="$repo_url/actions/runs/${{ github.run_id }}"
+            text="The run: $link"
+            tags="x"
+          fi
+          message=$(printf '%s\n%s %s' "$text" "${GITHUB_SHA::7}" "$(git log -1 --format=%s 2>/dev/null)")
+          curl -sS -H "Title: $title" -H "Click: $link" -H "Tags: $tags" -d "$message" "https://ntfy.sh/$NTFY_TOPIC" || true
