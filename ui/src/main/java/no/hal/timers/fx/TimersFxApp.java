@@ -44,11 +44,15 @@ public class TimersFxApp extends Application {
    * @param fullScreen whether the window is the whole screen, as on a phone
    */
   public static void show(Stage stage, boolean fullScreen) throws IOException {
-    IconFonts.load();
-    var bundle = ResourceBundle.getBundle("no.hal.timers.fx.TimersFxApp");
     var scene = fullScreen ? new Scene(new Group()) : new Scene(new Group(), 520, 720);
-    var navigator = new Navigator(scene, new EventStore(defaultStoreDirectory()), bundle);
-    navigator.showList();
+    try {
+      IconFonts.load();
+      var bundle = ResourceBundle.getBundle("no.hal.timers.fx.TimersFxApp");
+      new Navigator(scene, new EventStore(defaultStoreDirectory()), bundle).showList();
+    } catch (Throwable e) {
+      // shown, and not a black screen
+      scene.setRoot(Navigator.createErrorRoot(e));
+    }
     if (! fullScreen) {
       stage.setX(20);
       stage.setY(20);

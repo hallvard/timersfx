@@ -77,6 +77,9 @@
                         <list>org.kordamp.ikonli.javafx.FontIcon</list>
                         <list>no.hal.timers.fx.TimersFxAppController</list>
                         <list>no.hal.timers.fx.EventListController</list>
+                        <!-- created by name when an fxml file is loaded -->
+                        <list>javafx.scene.layout.VBox</list>
+                        <list>javafx.scene.control.TextField</list>
                     </reflectionList>
                     <releaseConfiguration>
                         <appLabel>TimersFx</appLabel>

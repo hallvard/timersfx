@@ -1,10 +1,14 @@
 package no.hal.timers.fx;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ResourceBundle;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.BorderPane;
 import no.hal.timers.core.Competition;
 import no.hal.timers.core.Participant;
 import no.hal.timers.io.EventStore;
@@ -44,9 +48,23 @@ final class Navigator {
       var loader = load("EventList.fxml");
       ((EventListController) loader.getController()).setNavigator(this, store);
       scene.setRoot(loader.getRoot());
-    } catch (IOException e) {
-      throw new IllegalStateException("The list of events could not be shown", e);
+    } catch (Throwable e) {
+      scene.setRoot(createErrorRoot(e));
     }
+  }
+
+  /**
+   * A screen with the text of an error, instead of a black screen, which is what a native app shows when it fails to start
+   * and has nowhere to tell why.
+   */
+  static Parent createErrorRoot(Throwable error) {
+    var text = new StringWriter();
+    error.printStackTrace(new PrintWriter(text));
+    System.err.println(text);
+    var area = new TextArea(text.toString());
+    area.setEditable(false);
+    area.setWrapText(true);
+    return new BorderPane(area);
   }
 
   void openEvent(String baseName) {
@@ -61,8 +79,8 @@ final class Navigator {
       var loader = load("TimersFxApp.fxml");
       ((TimersFxAppController) loader.getController()).setEvent(competition, () -> save(baseName, competition), this::showList);
       scene.setRoot(loader.getRoot());
-    } catch (IOException e) {
-      throw new IllegalStateException("The event could not be shown", e);
+    } catch (Throwable e) {
+      scene.setRoot(createErrorRoot(e));
     }
   }
 
