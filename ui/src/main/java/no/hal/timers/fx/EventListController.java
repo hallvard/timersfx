@@ -38,6 +38,9 @@ public class EventListController {
   Label noEventsLabel;
 
   @FXML
+  Label localeLabel;
+
+  @FXML
   Node promptBox;
 
   @FXML
@@ -60,6 +63,8 @@ public class EventListController {
 
   @FXML
   void initialize() {
+    // temporary diagnostic: the default locale and the locale the bundle was found for
+    localeLabel.setText("locale " + java.util.Locale.getDefault() + ", bundle '" + resources.getLocale() + "'");
     // only what a location can have can be written, so the name of an event is always a valid file name
     locationField.setTextFormatter(new TextFormatter<String>(
         change -> EventStore.isValidLocation(change.getControlNewText()) ? change : null));

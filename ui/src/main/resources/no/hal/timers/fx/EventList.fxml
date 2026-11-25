@@ -22,6 +22,8 @@
           </graphic>
         </Button>
       </HBox>
+      <!-- temporary diagnostic of which language is used -->
+      <Label fx:id="localeLabel"/>
       <!-- asks for the location, for a new event, a copy or a new name, here and not in a dialog, which does not work well in the native app -->
       <VBox fx:id="promptBox" visible="false" managed="false" styleClass="container">
         <Label fx:id="promptLabel"/>
