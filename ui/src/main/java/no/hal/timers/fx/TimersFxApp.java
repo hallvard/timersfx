@@ -1,13 +1,14 @@
 package no.hal.timers.fx;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
+import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import no.hal.timers.io.EventStore;
 
 /**
  * The main class for the TimersFX application.
@@ -30,21 +31,29 @@ public class TimersFxApp extends Application {
     show(primaryStage, false);
   }
 
+  /** The directory of the events: in the home directory of the user, which on Android is the private directory of the app. */
+  static Path defaultStoreDirectory() {
+    return Path.of(System.getProperty("timersfx.dir",
+        Path.of(System.getProperty("user.home"), ".timersfx", "events").toString()));
+  }
+
   /**
-   * Shows the user interface in the stage. Used by the desktop (app), web and mobile modules.
+   * Shows the user interface in the stage, which starts with the list of events. Used by the desktop (app), web and mobile modules.
    *
    * @param stage the stage to show the user interface in
    * @param fullScreen whether the window is the whole screen, as on a phone
    */
   public static void show(Stage stage, boolean fullScreen) throws IOException {
     IconFonts.load();
-    Parent parent = FXMLLoader.load(TimersFxApp.class.getResource("TimersFxApp.fxml"),
-        ResourceBundle.getBundle("no.hal.timers.fx.TimersFxApp"));
-    if (!fullScreen) {
+    var bundle = ResourceBundle.getBundle("no.hal.timers.fx.TimersFxApp");
+    var scene = fullScreen ? new Scene(new Group()) : new Scene(new Group(), 520, 720);
+    var navigator = new Navigator(scene, new EventStore(defaultStoreDirectory()), bundle);
+    navigator.showList();
+    if (! fullScreen) {
       stage.setX(20);
       stage.setY(20);
     }
-    stage.setScene(new Scene(parent));
+    stage.setScene(scene);
     stage.show();
   }
 

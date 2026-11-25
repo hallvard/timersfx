@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import no.hal.timers.core.Competition;
@@ -39,48 +41,78 @@ public class CompetitionCsvReader {
     var timingKeys = new ArrayList<String>();
     var headers = allRows.get(0);
 
-    // guess which headers are timing keys, by looking at first line with value
+    // the column with the start time marks the format written by the writer, where the times are since the start
+    var startCol = -1;
     for (var colNum = 1; colNum < headers.length; colNum++) {
-      var header = headers[colNum];
-      var allEmpty = true;
-      for (var rowNum = 1; rowNum < allRows.size(); rowNum++) {
-        var row = allRows.get(rowNum);
-        if (colNum < row.length) {
-          var value = row[colNum].trim();
-          if (value.length() > 0) {
-            allEmpty = false;
-          }
-          if (isTiming(value)) {
-            timingKeys.add(header);
-            break;
-          }
+      if (CompetitionWriter.START_KEY.equals(headers[colNum])) {
+        startCol = colNum;
+      }
+    }
+    var timesAreSinceStart = startCol >= 0;
+
+    if (timesAreSinceStart) {
+      // all the other columns are timing keys, also those without any times
+      for (var colNum = 1; colNum < headers.length; colNum++) {
+        if (colNum != startCol) {
+          timingKeys.add(headers[colNum]);
         }
       }
-      if (emptyColumnsAreTime && allEmpty) {
-        timingKeys.add(header);
+    } else {
+      // guess which headers are timing keys, by looking at first line with value
+      for (var colNum = 1; colNum < headers.length; colNum++) {
+        var header = headers[colNum];
+        var allEmpty = true;
+        for (var rowNum = 1; rowNum < allRows.size(); rowNum++) {
+          var row = allRows.get(rowNum);
+          if (colNum < row.length) {
+            var value = row[colNum].trim();
+            if (value.length() > 0) {
+              allEmpty = false;
+            }
+            if (isTiming(value)) {
+              timingKeys.add(header);
+              break;
+            }
+          }
+        }
+        if (emptyColumnsAreTime && allEmpty) {
+          timingKeys.add(header);
+        }
       }
     }
     var comp = new Competition();
     comp.setTimingKeys(timingKeys.toArray(new String[timingKeys.size()]));
+    // the last timing key is the finish
+    var finishCol = -1;
+    for (var colNum = 1; colNum < headers.length; colNum++) {
+      if (colNum != startCol && timingKeys.contains(headers[colNum])) {
+        finishCol = colNum;
+      }
+    }
 
     for (int rowNum = 1; rowNum < allRows.size(); rowNum++) {
       var row = allRows.get(rowNum);
-      var name = row[0].trim();
-      var participant = new Participant(name);
-      var participation = comp.addParticipant(participant);
+      var name = row[0] != null ? row[0].trim() : "";
+      var participation = comp.addParticipant(new Participant(name));
+      if (startCol >= 0 && startCol < row.length && row[startCol] != null) {
+        var startTime = parseTime(row[startCol].trim());
+        if (startTime != null) {
+          participation.start(startTime);
+        }
+      }
       var total = Duration.ZERO;
       for (var colNum = 1; colNum < headers.length; colNum++) {
         var header = headers[colNum];
-        if (timingKeys.contains(header)) {
-          if (colNum < row.length) {
-            var nthLast = headers.length - colNum - 1;
+        if (colNum != startCol && timingKeys.contains(header)) {
+          if (colNum < row.length && row[colNum] != null) {
             var duration = parseDuration(row[colNum].trim());
             if (duration != null) {
               total = total.plus(duration);
-              var time = (columnsAreTotals || (nthLast == 0 && lastColumnIsTotal)
+              var isFinish = colNum == finishCol;
+              var time = (timesAreSinceStart || columnsAreTotals || (isFinish && lastColumnIsTotal)
                   ? duration
                   : total);
-              var timingKey = (nthLast == 0 ? Participation.Status.FINISH.name() : header);
+              var timingKey = (isFinish ? Participation.Status.FINISH.name() : header);
               participation.time(time, timingKey);
             }
           }
@@ -88,6 +120,15 @@ public class CompetitionCsvReader {
       }
     }
     return comp;
+  }
+
+  /** Parses a clock time, HH:mm:ss or HH:mm, or returns null if it isn't one. */
+  LocalTime parseTime(String value) {
+    try {
+      return LocalTime.parse(value);
+    } catch (DateTimeParseException e) {
+      return null;
+    }
   }
 
   private boolean isTiming(String value) {

@@ -37,14 +37,6 @@ public class Timings<K, T extends Temporal & Comparable<T>> {
     setStartTime(time);
   }
 
-  /**
-   * Removes the start time and all the timings.
-   */
-  public void clear() {
-    startTime = null;
-    timings = null;
-  }
-
   public T getStartTime() {
     return startTime;
   }

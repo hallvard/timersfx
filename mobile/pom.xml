@@ -76,6 +76,7 @@
                     <reflectionList>
                         <list>org.kordamp.ikonli.javafx.FontIcon</list>
                         <list>no.hal.timers.fx.TimersFxAppController</list>
+                        <list>no.hal.timers.fx.EventListController</list>
                     </reflectionList>
                     <releaseConfiguration>
                         <appLabel>TimersFx</appLabel>

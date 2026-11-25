@@ -96,17 +96,14 @@ public class TimersFxAppController {
   @FXML
   ResourceBundle resources;
 
-  private String participantNameFormat;
-  private String timingKeyFormat;
   private String emptyTimeLabel;
+  private Timeline timeline;
 
   @FXML
   void initialize() {
-    participantNameFormat = resources.getString("participantNameFormat");
-    timingKeyFormat = resources.getString("timingKeyFormat");
     emptyTimeLabel = resources.getString("emptyTimeLabel");
     if (timeLabel != null) {
-      var timeline = new Timeline();
+      timeline = new Timeline();
       timeline.setCycleCount(Timeline.INDEFINITE);
       timeline.getKeyFrames()
           .add(new KeyFrame(javafx.util.Duration.seconds(1), event -> handleTimeChanged()));
@@ -116,18 +113,45 @@ public class TimersFxAppController {
       shareResultsButton.setVisible(true);
       shareResultsButton.setManaged(true);
     }
-    competition = new Competition();
-    String[] timingKeys = new String[4];
-    for (var i = 0; i < timingKeys.length - 1; i++) {
-      timingKeys[i] = String.format(timingKeyFormat, i + 1);
-    }
-    timingKeys[timingKeys.length - 1] = resources.getString("finishLabel");
-    competition.setTimingKeys(timingKeys);
-    for (var i = 0; i < 5; i++) {
-      competition.addParticipant(new Participant(String.format(participantNameFormat, i + 1)));
-    }
+  }
+
+  private Runnable onChanged = () -> { };
+  private Runnable onBack = () -> { };
+
+  /**
+   * Shows an event, instead of the empty table the screen starts with.
+   *
+   * @param competition the table of the event
+   * @param onChanged called when the table has changed, to save it
+   * @param onBack called to go back to the list of events
+   */
+  void setEvent(Competition competition, Runnable onChanged, Runnable onBack) {
+    this.competition = competition;
+    this.onBack = onBack;
     updateGrid();
     clearSelection();
+    // set last, so showing the event isn't saved as a change
+    this.onChanged = onChanged;
+  }
+
+  /** Goes back to the list of events. The names that are being edited are kept first. */
+  @FXML
+  void handleBack() {
+    if (participantTextFields != null) {
+      updateEditedParticipants();
+      participantTextFields = null;
+    }
+    if (timingKeyTextFields != null) {
+      var newTimingKeys = getEditedText(timingKeyTextFields, true);
+      competition.setTimingKeys(newTimingKeys.toArray(new String[newTimingKeys.size()]));
+      timingKeyTextFields = null;
+    }
+    onChanged.run();
+    // the clock must not go on when the screen is gone
+    if (timeline != null) {
+      timeline.stop();
+    }
+    onBack.run();
   }
 
   private final TimeProvider timeProvider = () -> LocalTime.now();
@@ -287,7 +311,9 @@ public class TimersFxAppController {
     }
     addEditingSpace();
     handleParticipationActionButtonsEnablement();
-    updateStopResetButtons();
+    updateStopButton();
+    // every change makes the grid again, so this is where the table is saved
+    onChanged.run();
   }
 
   private boolean isFinishKey(int timingKeyIndex) {
@@ -634,32 +660,11 @@ public class TimersFxAppController {
   @FXML
   Button stopButton;
 
-  @FXML
-  Button resetButton;
-
-  @FXML
-  Node topLine;
-
-  @FXML
-  Node resetConfirmBox;
-
-  private static void setShown(Node node, boolean shown) {
-    node.setVisible(shown);
-    node.setManaged(shown);
-  }
-
-  /**
-   * Stop is enabled as long as a participant is active. Reset is always enabled.
-   * It is made again when the grid is, and that also ends a question about resetting.
-   */
-  private void updateStopResetButtons() {
-    if (stopButton == null) {
-      return;
+  /** Stop is enabled as long as a participant is active. */
+  private void updateStopButton() {
+    if (stopButton != null) {
+      stopButton.setDisable(competition.stream().noneMatch(p -> p.getStatus() == Participation.Status.ACTIVE));
     }
-    var stopMode = competition.stream().anyMatch(p -> p.getStatus() == Participation.Status.ACTIVE);
-    stopButton.setDisable(! stopMode);
-    setShown(topLine, true);
-    setShown(resetConfirmBox, false);
   }
 
   /** Stops all that are active. */
@@ -673,24 +678,5 @@ public class TimersFxAppController {
     }
     updateGrid();
     clearSelection();
-  }
-
-  /** Asks whether to reset, in the window instead of the top line, not as a dialog, which does not work well in the native app. */
-  @FXML
-  void handleReset() {
-    setShown(topLine, false);
-    setShown(resetConfirmBox, true);
-  }
-
-  @FXML
-  void handleConfirmReset() {
-    competition.reset();
-    updateGrid();
-    clearSelection();
-  }
-
-  @FXML
-  void handleCancelReset() {
-    updateStopResetButtons();
   }
 }

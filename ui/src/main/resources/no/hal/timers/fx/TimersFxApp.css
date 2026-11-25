@@ -44,3 +44,10 @@
 .even-row {
   -fx-background-color: lightgray;
 }
+.error {
+    -fx-text-fill: red;
+}
+
+.event-row {
+    -fx-padding: 4 0 4 0;
+}

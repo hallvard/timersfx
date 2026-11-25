@@ -59,9 +59,9 @@ public class CompetitionWriterTest {
   @Test
   public void testWriteCompetitionCsvWithTwoParticipants() {
     assertEquals("""
-        Participant,Round 1,Mål
-        P 1,01:01:01,01:02:02
-        P 2,01:01:02,01:02:03
+        Participant,Start,Round 1,Mål
+        P 1,11:16:00,01:01:01,01:02:02
+        P 2,11:16:00,01:01:02,01:02:03
         """,
         CsvTarget.toString(createCompetitionWithTwoParticipants())
     );
@@ -71,9 +71,9 @@ public class CompetitionWriterTest {
   public void testWriteCompetitionHtmlTableWithTwoParticipants() {
     assertEquals("""
         <table>
-          <tr><th>Participant</th><th>Round 1</th><th>Mål</th></tr>
-          <tr><td>P 1</td><td>01:01:01</td><td>01:02:02</td></tr>
-          <tr><td>P 2</td><td>01:01:02</td><td>01:02:03</td></tr>
+          <tr><th>Participant</th><th>Start</th><th>Round 1</th><th>Mål</th></tr>
+          <tr><td>P 1</td><td>11:16:00</td><td>01:01:01</td><td>01:02:02</td></tr>
+          <tr><td>P 2</td><td>11:16:00</td><td>01:01:02</td><td>01:02:03</td></tr>
         </table>
         """,
         HtmlTableTarget.toString(createCompetitionWithTwoParticipants())
@@ -90,8 +90,8 @@ public class CompetitionWriterTest {
     p.time(start.plusMinutes(5), "5 km");
     p.finish(start.plusMinutes(11));
     assertEquals("""
-        Participant,1 km,2 km,3 km,5 km,8 km,Mål
-        P,,,,05:00,,11:00
+        Participant,Start,1 km,2 km,3 km,5 km,8 km,Mål
+        P,10:00:00,,,,05:00,,11:00
         """,
         CsvTarget.toString(comp)
     );
@@ -107,8 +107,8 @@ public class CompetitionWriterTest {
     p.time(start.plusMinutes(5), "1 km");
     p.stop(start.plusMinutes(7));
     assertEquals("""
-        Participant,1 km,Mål
-        P,05:00,
+        Participant,Start,1 km,Mål
+        P,10:00:00,05:00,
         """,
         CsvTarget.toString(comp)
     );

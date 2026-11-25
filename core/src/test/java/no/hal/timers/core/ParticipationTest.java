@@ -54,14 +54,11 @@ public class ParticipationTest {
   }
 
   @Test
-  public void testEndDurationAndReset() {
+  public void testEndDuration() {
     var start = LocalTime.of(10, 0, 0);
     participation.start(start);
     assertTrue(participation.getEndDuration().isEmpty());
     participation.stop(start.plusMinutes(3));
     assertEquals(java.time.Duration.ofMinutes(3), participation.getEndDuration().get());
-    participation.reset();
-    assertSame(Status.START, participation.getStatus());
-    assertTrue(participation.getEndDuration().isEmpty());
   }
 }

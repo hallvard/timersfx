@@ -86,13 +86,6 @@ public class Competition implements Iterable<Participation> {
     return java.util.stream.IntStream.range(0, timingKeys.size()).mapToObj(this::getTimeKey).toList();
   }
 
-  /**
-   * Removes all start times and timings of all the participations. The participants and timing keys are kept.
-   */
-  public void reset() {
-    participations.forEach(Participation::reset);
-  }
-
   public void setTimingKeys(String... keys) {
     timingKeys = List.of(keys);
   }  
