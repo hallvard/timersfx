@@ -1,4 +1,4 @@
-name: "Android, changed 2026-11-25T22:37"
+name: "Android, changed 2026-11-25T22:48"
 
 # Builds the native Android app (an apk) with Gluon, which can only be done on Linux. It takes a while, so it is only started when this file is
 # changed and pushed to master, or by hand (Actions, Android, Run workflow, or gh workflow run android.yml), and the apk is a file of the run. 

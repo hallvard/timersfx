@@ -5,6 +5,7 @@ import java.util.ResourceBundle;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
 
 /**
  * Controller for the settings screen, where the language is chosen.
@@ -37,6 +38,7 @@ public class SettingsController {
     this.navigator = navigator;
     this.settings = settings;
     languageBox.getItems().setAll(LANGUAGES);
+    languageBox.setCellFactory(list -> new LanguageCell());
     var current = settings.getLocale().getLanguage();
     // the language no is Norwegian, which is shown as bokmål
     languageBox.getSelectionModel().select(LANGUAGES.stream()
@@ -51,6 +53,33 @@ public class SettingsController {
         Platform.runLater(navigator::showSettings);
       }
     });
+  }
+
+  /**
+   * A choice in the list that is made when the finger or mouse is released on it. The list itself makes the choice on a click,
+   * which is not sent when the finger moves a little between press and release, as it does on a phone, so a slow tap did nothing.
+   */
+  private class LanguageCell extends ListCell<Language> {
+
+    private boolean pressed;
+
+    LanguageCell() {
+      setOnMousePressed(event -> pressed = true);
+      setOnMouseReleased(event -> {
+        // released where it was pressed, so it is not the end of scrolling
+        if (pressed && ! isEmpty() && contains(event.getX(), event.getY())) {
+          languageBox.getSelectionModel().select(getItem());
+          languageBox.hide();
+        }
+        pressed = false;
+      });
+    }
+
+    @Override
+    protected void updateItem(Language language, boolean empty) {
+      super.updateItem(language, empty);
+      setText(empty || language == null ? null : language.name());
+    }
   }
 
   @FXML
