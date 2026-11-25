@@ -15,10 +15,15 @@
     <VBox>
       <HBox styleClass="spacer">
         <Label text="%eventListTitle.text" styleClass="header"/>
-        <Region HBox.hgrow="ALWAYS"/>
         <Button fx:id="newEventButton" onAction="#handleNew">
           <graphic>
             <FontIcon iconLiteral="mdi2p-plus-thick:24"/>
+          </graphic>
+        </Button>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button onAction="#handleSettings">
+          <graphic>
+            <FontIcon iconLiteral="mdi2c-cog:24"/>
           </graphic>
         </Button>
       </HBox>

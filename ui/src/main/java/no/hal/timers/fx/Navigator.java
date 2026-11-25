@@ -3,6 +3,7 @@ package no.hal.timers.fx;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Locale;
 import java.util.ResourceBundle;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -21,12 +22,23 @@ final class Navigator {
 
   private final Scene scene;
   private final EventStore store;
-  private final ResourceBundle bundle;
+  private final Settings settings;
+  private ResourceBundle bundle;
 
-  Navigator(Scene scene, EventStore store, ResourceBundle bundle) {
+  Navigator(Scene scene, EventStore store, Settings settings) {
     this.scene = scene;
     this.store = store;
-    this.bundle = bundle;
+    this.settings = settings;
+    applyLanguage();
+  }
+
+  /**
+   * Uses the language of the settings for the texts. The default locale is set too, so the bundle of the language is found
+   * also when it is not the language of the device.
+   */
+  void applyLanguage() {
+    Locale.setDefault(settings.getLocale());
+    bundle = ResourceBundle.getBundle("no.hal.timers.fx.TimersFxApp");
   }
 
   private Object currentController;
@@ -47,6 +59,16 @@ final class Navigator {
     try {
       var loader = load("EventList.fxml");
       ((EventListController) loader.getController()).setNavigator(this, store);
+      scene.setRoot(loader.getRoot());
+    } catch (Throwable e) {
+      scene.setRoot(createErrorRoot(e));
+    }
+  }
+
+  void showSettings() {
+    try {
+      var loader = load("Settings.fxml");
+      ((SettingsController) loader.getController()).setNavigator(this, settings);
       scene.setRoot(loader.getRoot());
     } catch (Throwable e) {
       scene.setRoot(createErrorRoot(e));

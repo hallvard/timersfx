@@ -80,6 +80,8 @@
                         <!-- created by name when an fxml file is loaded -->
                         <list>javafx.scene.layout.VBox</list>
                         <list>javafx.scene.control.TextField</list>
+                        <list>javafx.scene.control.ComboBox</list>
+                        <list>no.hal.timers.fx.SettingsController</list>
                     </reflectionList>
                     <releaseConfiguration>
                         <appLabel>TimersFx</appLabel>

@@ -2,7 +2,6 @@ package no.hal.timers.fx;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ResourceBundle;
 import java.util.function.Consumer;
 import javafx.application.Application;
 import javafx.scene.Group;
@@ -47,8 +46,10 @@ public class TimersFxApp extends Application {
     var scene = fullScreen ? new Scene(new Group()) : new Scene(new Group(), 520, 720);
     try {
       IconFonts.load();
-      var bundle = ResourceBundle.getBundle("no.hal.timers.fx.TimersFxApp");
-      new Navigator(scene, new EventStore(defaultStoreDirectory()), bundle).showList();
+      var storeDirectory = defaultStoreDirectory();
+      // next to the directory of the events, so it isn't taken for an event
+      var settings = new Settings(storeDirectory.resolveSibling("settings.properties"));
+      new Navigator(scene, new EventStore(storeDirectory), settings).showList();
     } catch (Throwable e) {
       // shown, and not a black screen
       scene.setRoot(Navigator.createErrorRoot(e));

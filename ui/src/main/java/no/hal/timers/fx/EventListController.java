@@ -77,6 +77,11 @@ public class EventListController {
     refresh();
   }
 
+  @FXML
+  void handleSettings() {
+    navigator.showSettings();
+  }
+
   private static void setShown(Node node, boolean shown) {
     node.setVisible(shown);
     node.setManaged(shown);
